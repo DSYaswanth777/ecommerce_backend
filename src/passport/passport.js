@@ -3,7 +3,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const User = require('../models/User');
 const bcrypt = require("bcryptjs");
 
-// Configure Passport.js to use LocalStrategy
+//**  Configure Passport.js to use LocalStrategy
 passport.use(
   new LocalStrategy(
     { usernameField: "username" },

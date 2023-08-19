@@ -4,11 +4,12 @@ const cors = require("cors");
 const passport = require("passport");
 const session = require("express-session");
 const flash = require("connect-flash");
+const connectToDatabase = require("./src/config/database");
+//**Route Import */
 const authRoutes = require("./src/routes/auth");
 const customersRoutes = require("./src/routes/customers");
 const categoryRoutes = require("./src/routes/category");
-const connectToDatabase = require("./src/config/database"); // Import the database connection function
-
+const productRoutes = require("./src/routes/product")
 dotenv.config();
 
 const app = express();
@@ -37,7 +38,7 @@ connectToDatabase(); // Call the database connection function
 app.use("/", authRoutes); // Signup and Login
 app.use("/", customersRoutes); // Customers Route
 app.use("/", categoryRoutes); // Category Routes
-
+app.use("/", productRoutes)
 // Start the server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
