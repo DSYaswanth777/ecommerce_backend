@@ -1,5 +1,7 @@
+//**Mongoose import */
 const mongoose = require('mongoose');
 
+//** UserSchema */
 const userSchema = new mongoose.Schema({
   name: {
     type: String,

@@ -1,21 +1,28 @@
-const express = require('express');
-const router = express.Router();
+//**Importing User Model */
 const User = require('../models/User');
+//**Importing Middlewares */
+const authorizationMiddleware = require('../middlewares/authorizationMiddleware');
+const authenticationMiddleware = require('../middlewares/authenticationMiddleware');
 
-router.get('/customers', async (req, res) => {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
+//**Controller to get all customers */
+exports.getCustomers = [
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  async (req, res) => {
     try {
       const customers = await User.find({ role: 'customer' }, 'name mobile email');
       res.status(200).json(customers);
     } catch (error) {
       res.status(500).json({ message: 'An error occurred while fetching customers' });
     }
-  } else {
-    res.status(403).json({ message: 'Access denied' });
   }
-});
-router.get('/search/customer', async (req, res) => {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
+];
+
+//**Controller to search for a customer */
+exports.searchCustomers = [
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  async (req, res) => {
     try {
       const { searchField, searchTerm } = req.query;
       let query = { role: 'customer' };
@@ -42,10 +49,5 @@ router.get('/search/customer', async (req, res) => {
     } catch (error) {
       res.status(500).json({ message: 'An error occurred while fetching customers' });
     }
-  } else {
-    res.status(403).json({ message: 'Access denied' });
   }
-});
-
-module.exports = router;
-
+];
