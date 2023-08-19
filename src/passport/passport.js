@@ -2,17 +2,14 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const User = require('../models/User');
 const bcrypt = require("bcryptjs");
+require('dotenv').config();
 
 //**  Configure Passport.js to use LocalStrategy
 passport.use(
   new LocalStrategy(
     { usernameField: "username" },
     async (username, password, done) => {
-      const adminCredentials = [
-        { username: "admin1", password: "admin123" },
-        { username: "admin2", password: "admin456" },
-      ];
-
+      const adminCredentials = JSON.parse(process.env.ADMIN_CREDENTIALS);
       const admin = adminCredentials.find((cred) => cred.username === username);
       if (admin && admin.password === password) {
         return done(null, { username: admin.username, role: "admin" });
