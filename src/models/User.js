@@ -1,5 +1,7 @@
+//**Mongoose import */
 const mongoose = require('mongoose');
 
+//** UserSchema */
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -32,10 +34,21 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'customer'], // Use 'enum' to restrict role values to these options
-    default: 'customer', // Set default role to 'customer'
+    enum: ['admin', 'customer'], 
+    default: 'customer', 
   },
-
+  cart: [
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product', // Reference to the Product model
+      },
+      quantity: {
+        type: Number,
+        default: 1, // Default quantity when adding to cart
+      },
+    },
+  ],
 });
 
 module.exports = mongoose.model('User', userSchema);
