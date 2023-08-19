@@ -1,16 +1,28 @@
-const express = require('express');
+//**Express Initilzation */
+const express = require("express");
+//**Router Initilaztion */
 const router = express.Router();
-const { getCustomers, searchCustomers } = require('../controllers/customerController');
-
-// Middleware to check if the user is authenticated
-const isAdminAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
-    return next();
-  }
-  res.status(403).json({ message: 'Access denied' });
-};
-
-router.get('/customers', isAdminAuthenticated, getCustomers);
-router.get('/search/customer', isAdminAuthenticated, searchCustomers);
+//**Importing Controllers */
+const {
+  getCustomers,
+  searchCustomers,
+} = require("../controllers/customerController");
+//**Importing Middlewares */
+const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
+const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
+//**Route to get all Customers */
+router.get(
+  "/customers",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  getCustomers
+);
+//**Route for search a customer */
+router.get(
+  "/search/customer",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  searchCustomers
+);
 
 module.exports = router;

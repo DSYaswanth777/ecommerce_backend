@@ -11,30 +11,38 @@ const {
   deleteSubCategory,
 } = require("../controllers/categoriesController");
 
-//** Middleware to check if the user is authenticated */ 
-const isAdminAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated() && req.user.role === "admin") {
-    return next();
-  }
-  res.status(403).json({ message: "Access denied" });
-};
+const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
+const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
+
 //**Route for get all categories */
 router.get("/categories", getAllCategories);
 //**Route to add a category */
-router.post("/categories", addCategory, isAdminAuthenticated);
+router.post(
+  "/categories",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  addCategory
+);
 //**Route to add a SubCategory */
 router.post(
   "/categories/:categoryId/subcategories",
-  addSubCategory,
-  isAdminAuthenticated
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  addSubCategory
 );
 //**Route to delete a Category */
-router.delete("/categories/:categoryId", isAdminAuthenticated, deleteCategory);
+router.delete(
+  "/categories/:categoryId",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  deleteCategory
+);
 //**Route to delete a Sub Category */
 router.delete(
   "/categories/:categoryId/subcategories/:subcategoryId",
-  deleteSubCategory,
-  isAdminAuthenticated
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  deleteSubCategory
 );
 
 module.exports = router;
