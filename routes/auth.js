@@ -114,9 +114,7 @@ router.post("/login", (req, res, next) => {
       if (err) {
         return next(err);
       }
-
       const { role } = req.user;
-
       if (role === "admin") {
         return res.status(200).json({ message: "Admin logged in", role });
       } else if (role === "customer") {

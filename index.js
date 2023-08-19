@@ -6,6 +6,7 @@ const app = express();
 const passport = require("passport");
 const authRoutes = require("./routes/auth");
 const customersRoutes = require("./routes/customers")
+const categoryRoutes = require("./routes/category")
 const session = require('express-session');
 const flash = require('connect-flash');
 app.use(passport.initialize());
@@ -35,7 +36,10 @@ mongoose
 
 //Siginup and Login
 app.use("/", authRoutes);
+//Customers Route
 app.use("/",customersRoutes)
+//Catergory Routes
+app.use("/", categoryRoutes)
 // Start the server
 app.listen(3000, () => {
   console.log("Server is running on port 3000");

@@ -32,8 +32,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'customer'], // Use 'enum' to restrict role values to these options
-    default: 'customer', // Set default role to 'customer'
+    enum: ['admin', 'customer'], 
+    default: 'customer', 
   },
 
 });
