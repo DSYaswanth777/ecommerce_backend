@@ -71,9 +71,6 @@ exports.login = (req, res, next) => {
 exports.profileUpdate = [
   authenticationMiddleware.isAuthenticated,
   async (req, res) => {
-  // if (!req.isAuthenticated()) {
-  //   return res.status(401).json({ message: "Not authenticated" });
-  // }
   const { name, age, mobile, email } = req.body;
   const userId = req.user.id;
 
