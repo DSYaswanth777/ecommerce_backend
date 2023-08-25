@@ -37,6 +37,20 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'customer'], 
     default: 'customer', 
   },
+  
+  otp: {
+    type: Number,
+    required: false,
+  },
+  resetOTP: {
+    type:String,
+    required:false,
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false, // New field to indicate if the user is verified
+  },
   cart: [
     {
       product: {

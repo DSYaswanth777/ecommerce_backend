@@ -18,6 +18,8 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+// app.use(bodyParser.json()); // Add this line to parse JSON
+
 app.use(cors());
 
 // Set up session and flash middleware

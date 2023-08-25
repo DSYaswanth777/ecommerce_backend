@@ -11,6 +11,9 @@ const {
 } = require("../controllers/productController");
 //**Router Initilaztion */
 const router = express.Router();
+const passport = require("../passport/passport")
+router.use(passport.initialize());
+router.use(passport.session());
 //**Importing Middleware */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
@@ -18,8 +21,8 @@ const authenticationMiddleware = require("../middlewares/authenticationMiddlewar
 router.post(
   "/addproduct",
   addProduct,
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin
+  passport.authenticate('jwt', { session: false }),
+  authorizationMiddleware.isAdmin,
 );
 //**Get all products 
 router.get("/products", getAllProducts);
@@ -34,8 +37,8 @@ router.put(
 router.delete(
   "/products/delete/:productId",
   deleteProduct,
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin
+  passport.authenticate('jwt', { session: false }),
+  authorizationMiddleware.isAdmin,
 );
 //**Filter products based on category */
 router.get(

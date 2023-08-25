@@ -1,27 +1,34 @@
 //**Importing User Model */
 const User = require('../models/User');
 //**Importing Middlewares */
-const authorizationMiddleware = require('../middlewares/authorizationMiddleware');
-const authenticationMiddleware = require('../middlewares/authenticationMiddleware');
 
 //**Controller to get all customers */
-exports.getCustomers = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
-  async (req, res) => {
-    try {
-      const customers = await User.find({ role: 'customer' }, 'name mobile email');
-      res.status(200).json(customers);
-    } catch (error) {
-      res.status(500).json({ message: 'An error occurred while fetching customers' });
-    }
+// Controller to fetch a list of customers
+// controllers/customerController.js
+
+exports.getCustomers = async (req, res) => {
+  try {
+    // Assuming you have a User model with necessary customer information
+    const customers = await User.find({ role: 'customer' }); // Fetch all customers
+
+    // If you want to customize the data before sending it in the response
+    const formattedCustomers = customers.map(customer => ({
+      id: customer.id,
+      name: customer.name,
+      email: customer.email,
+      // Include other customer data you want to send
+    }));
+
+    res.status(200).json(formattedCustomers);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch customers', error: error.message });
   }
-];
+};
+
 
 //**Controller to search for a customer */
 exports.searchCustomers = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
+  
   async (req, res) => {
     try {
       const { searchField, searchTerm } = req.query;

@@ -6,8 +6,6 @@ const authorizationMiddleware = require("../middlewares/authorizationMiddleware"
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 //** Add Product controller
 exports.addProduct = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
   upload.array("productImages", 5), // Assuming a maximum of 5 images can be uploaded
   async (req, res) => {
     try {
@@ -58,8 +56,7 @@ exports.getAllProducts = async (req, res) => {
 };
 //**  Edit Product controller
 exports.editProduct = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
+  
   async (req, res) => {
     try {
       const productId = req.params.productId;
@@ -100,8 +97,6 @@ exports.editProduct = [
 ];
 //**  Delete Product controller
 exports.deleteProduct = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
   async (req, res) => {
     try {
       const deletedProduct = await Product.findByIdAndDelete(
