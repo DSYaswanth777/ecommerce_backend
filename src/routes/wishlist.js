@@ -24,7 +24,7 @@ router.post(
 );
 //**Route to remove a product to wishlist */
 router.delete(
-  "/wishlist/delete",
+  "/wishlist/delete/:wishlistItemId",
   authenticationMiddleware.isAuthenticated,
   removeProductFromWishlist
 );

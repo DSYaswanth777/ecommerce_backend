@@ -14,14 +14,7 @@ const productSchema = new mongoose.Schema({
     ref: "Subcategory", // Reference to your Subcategory model
     required: true,
   },
-  wishlist: [
-    {
-      product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
-      },
-    },
-  ],
+  
 
 });
 

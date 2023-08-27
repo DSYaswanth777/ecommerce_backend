@@ -4,12 +4,9 @@ const Product = require("../models/productModel");
 //**Add Product to Wishlist Controller */
 exports.addProductToWishlist = async (req, res) => {
     try {
-        
         const userId = req.user.id;
         const { productId } = req.body;
         const user = await User.findById(userId);
-        console.log("User Wishlist:", user.wishlist);
-        console.log("User Cart:", user.cart);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -76,17 +73,30 @@ exports.addProductToWishlist = async (req, res) => {
         return res.status(404).json({ message: "User not found" });
       }
   
-      // Remove the wishlist item from the user's wishlist
-      user.wishlist.pull(wishlistItemId);
-      await user.save();
+      // Find the index of the wishlist item with the given ID
+      const wishlistItemIndex = user.wishlist.findIndex(item =>
+        item._id.equals(wishlistItemId)
+      );
   
-      res.status(200).json({ message: "Product removed from wishlist" });
+      if (wishlistItemIndex !== -1) {
+        // Remove the wishlist item at the specified index
+        user.wishlist.splice(wishlistItemIndex, 1);
+        await user.save();
+        
+        const updatedUser = await User.findById(userId).populate("wishlist.product");
+  
+        res.status(200).json({
+          message: "Product removed from wishlist",
+          updatedWishlist: updatedUser.wishlist,
+        });
+      } else {
+        res.status(404).json({ message: "Wishlist item not found" });
+      }
     } catch (error) {
       console.error("Error removing product from wishlist:", error);
-      res
-        .status(500)
-        .json({
-          message: "An error occurred while removing product from wishlist",
-        });
+      res.status(500).json({
+        message: "An error occurred while removing product from wishlist",
+      });
     }
-  };  
+  };
+  
