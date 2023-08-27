@@ -13,6 +13,7 @@ const {
   verifyOTP,
   forgotPassword,
   resetPassword,
+  getUserProfile,
 } = require("../controllers/authController");
 //**Signup Route
 router.post("/signup", signup);
@@ -22,7 +23,7 @@ router.post("/login", login);
 router.post("/verify-otp", verifyOTP);
 //** Update profile route */
 router.put(
-  "/update-profile",
+  "/profile/update",
   authenticationMiddleware.isAuthenticated,
   profileUpdate
 );
@@ -36,4 +37,9 @@ router.put(
 router.post("/forgot-password", forgotPassword);
 //**Reset Password */
 router.post("/reset-password", resetPassword);
+//**Profile */
+router.get("/profile",
+authenticationMiddleware.isAuthenticated,
+getUserProfile
+)
 module.exports = router;

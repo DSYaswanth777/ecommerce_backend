@@ -250,3 +250,26 @@ exports.resetPassword = async (req, res) => {
       .json({ message: "Error resetting password", error: error.message });
   }
 };
+//**Controller to get user profile */
+exports.getUserProfile = async (req, res) => {
+  const userId = req.user.id;
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Return user profile details
+    return res.status(200).json({
+      id: user.id,
+      name: user.name,
+      age: user.age,
+      mobile: user.mobile,
+      email: user.email,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Error fetching user profile", error: error.message });
+  }
+};

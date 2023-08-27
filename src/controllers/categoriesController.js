@@ -5,14 +5,26 @@ const { Category, Subcategory } = require("../models/categoryModel");
 //**Get all categories controller */
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({}, "name subcategories");
-    res.status(200).json(categories);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const count = await Category.countDocuments();
+    const totalPages = Math.ceil(count / limit);
+    const categories = await Category.find()
+      .skip((page - 1) * limit)
+      .limit(limit);
+    res.status(200).json({
+      categories,
+      currentPage: page,
+      totalPages,
+    });
   } catch (error) {
+    console.error("Error fetching categories:", error);
     res
       .status(500)
       .json({ message: "An error occurred while fetching categories" });
   }
 };
+
 //**Add Category controller */
 exports.addCategory = [
   async (req, res) => {

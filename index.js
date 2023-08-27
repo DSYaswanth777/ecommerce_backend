@@ -11,7 +11,7 @@ const customersRoutes = require("./src/routes/customers");
 const categoryRoutes = require("./src/routes/category");
 const productRoutes = require("./src/routes/product")
 const cartRoutes = require("./src/routes/cart")
-
+const wishlistRoutes = require("./src/routes/wishlist")
 dotenv.config();
 
 const app = express();
@@ -43,7 +43,9 @@ app.use("/", authRoutes); // Signup and Login
 app.use("/", customersRoutes); // Customers Route
 app.use("/", categoryRoutes); // Category Routes
 app.use("/", productRoutes);
-app.use("/",cartRoutes)
+app.use("/",cartRoutes);
+app.use("/",wishlistRoutes)
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {

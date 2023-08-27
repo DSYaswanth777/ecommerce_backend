@@ -8,11 +8,21 @@ const productSchema = new mongoose.Schema({
   productImages: [{ type: String, required: true }],
   productInfo: { type: String, required: true, min:10 },
   productColorOptions: [{ type: String }],
+  productStock:{type:Number,required:true, min:1, max:350},
   subcategoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subcategory", // Reference to your Subcategory model
     required: true,
   },
+  wishlist: [
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+      },
+    },
+  ],
+
 });
 
 const Product = mongoose.model("Product", productSchema);

@@ -16,6 +16,7 @@ exports.addProduct = [
         productInfo,
         productColorOptions,
         subcategoryId,
+        productStock
       } = req.body;
 
       const productPrice = productMRP - productDiscount;
@@ -31,6 +32,7 @@ exports.addProduct = [
         productInfo,
         productColorOptions,
         subcategoryId,
+        productStock
       });
 
       res.status(201).json(newProduct);
@@ -45,8 +47,21 @@ exports.addProduct = [
 //**  Get all products controller
 exports.getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find();
-    res.status(200).json(products);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const count = await Product.countDocuments();
+    const totalPages = Math.ceil(count / limit);
+
+    const products = await Product.find()
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      products,
+      currentPage: page,
+      totalPages,
+    });
   } catch (error) {
     console.error("Error fetching products:", error);
     res
@@ -54,6 +69,7 @@ exports.getAllProducts = async (req, res) => {
       .json({ message: "An error occurred while fetching products" });
   }
 };
+
 //**  Edit Product controller
 exports.editProduct = [
   async (req, res) => {
