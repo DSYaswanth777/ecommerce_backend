@@ -2,53 +2,56 @@
 const User = require("../models/User");
 //** Importing bcrypt for password hashing */
 const bcrypt = require("bcryptjs");
+//**Import jwt for token generration */
 const jwt = require("jsonwebtoken");
-const axios = require("axios"); // Import axios for making API requests
-//**OTP generator Function */
-async function sendOtp(mobile, otpRegenerationCount) {
-  if (otpRegenerationCount >= 3) {
-    throw new Error("OTP regeneration limit exceeded");
-  }
-
-  const otp = Math.floor(1000 + Math.random() * 9000); // Generate a 4-digit OTP
-
-  try {
-    const response = await axios.get(
-      `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&route=q&message=Your OTP code is ${otp}&language=english&flash=0&numbers=${mobile}`
-    );
-
-    if (response.data.return) {
-      return otp;
-    } else {
-      throw new Error("Failed to send OTP");
-    }
-  } catch (error) {
-    throw error;
-  }
-}
+//**Importing OTP service */
+const sendOtp = require("../OTP/otpService");
+//**Import express validation */
+const { validationResult } = require("express-validator");
+//**Token Generation */
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user.id, username: user.username, role: "customer" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+};
 //**Controller For Signup */
 exports.signup = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { name, age, mobile, email, password, confirmPassword } = req.body;
   // Check if passwords match
   if (password !== confirmPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
   }
-
+  //**Checking for user existence */
   try {
-    const user = await User.findOne({ $or: [{ mobile }, { email }] });
-    if (user) {
-      return res.status(400).json({
-        message: "User with the same mobile number or email already exists",
-      });
+    const existingUser = await User.findOne({ $or: [{ mobile }, { email }] });
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        return res.status(400).json({
+          message: "User with the same mobile number or email already exists",
+        });
+      } else {
+        // Generate and send new OTP
+        const otp = await sendOtp(mobile, existingUser.otpRegenerationCount);
+        // Update user's OTP and regeneration count
+        existingUser.otp = otp;
+        existingUser.otpRegenerationCount += 1;
+        await existingUser.save();
+        return res.status(200).json({
+          message:
+            "User already registered but not verified. New OTP sent to your mobile.",
+        });
+      }
     }
-
     // Generate and send OTP
     const otp = await sendOtp(mobile, 0);
-
     // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user
+    const hashedPassword = await bcrypt.hash(password, 10); // Create a new user
     const newUser = new User({
       name,
       age,
@@ -56,11 +59,10 @@ exports.signup = async (req, res) => {
       email,
       password: hashedPassword,
       otp,
-      role:"customer",
+      role: "customer",
       otpRegenerationCount: 1, // Initial count
       isVerified: false,
     });
-
     await newUser.save();
     res.status(201).json({
       message:
@@ -72,10 +74,9 @@ exports.signup = async (req, res) => {
       .json({ message: "User registration failed", error: error.message });
   }
 };
-
+//**Controller  for verify OTP */
 exports.verifyOTP = async (req, res) => {
   const { otp, mobile } = req.body;
-
   try {
     const user = await User.findOne({ mobile });
 
@@ -102,12 +103,15 @@ exports.verifyOTP = async (req, res) => {
 };
 //**Controller For Login */
 exports.login = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { username, password } = req.body;
   try {
     const user = await User.findOne({
       $or: [{ email: username }, { mobile: username }],
     });
-    console.log(user)
     if (!user) {
       return res.status(401).json({ message: "Incorrect username" });
     }
@@ -115,12 +119,8 @@ exports.login = async (req, res, next) => {
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Incorrect password" });
     }
-    
-    const token = jwt.sign(
-      { id: user.id, username: user.username, role: "customer" },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const token = generateToken(user);
+
     return res.status(200).json({
       message: `${user.name}, You have successfully Logged In Happy Shopping`,
       token: token,
@@ -131,7 +131,7 @@ exports.login = async (req, res, next) => {
         mobile: user.mobile,
         email: user.email,
         age: user.age,
-        role:user.role
+        role: user.role,
       },
     });
   } catch (error) {
@@ -140,7 +140,7 @@ exports.login = async (req, res, next) => {
       .json({ message: "Login failed", error: error.message });
   }
 };
-
+//**Controller For Update Profile */
 exports.profileUpdate = async (req, res) => {
   const userId = req.user.id;
   const { name, email } = req.body;
@@ -168,11 +168,10 @@ exports.profileUpdate = async (req, res) => {
       .json({ message: "Failed to update profile", error: error.message });
   }
 };
-
+//**Controller For Change Password */
 exports.changePassword = async (req, res) => {
   const userId = req.user.id;
   const { currentPassword, newPassword } = req.body;
-
   try {
     const user = await User.findById(userId);
 
@@ -200,54 +199,54 @@ exports.changePassword = async (req, res) => {
       .json({ message: "Failed to change password", error: error.message });
   }
 };
-exports.forgotPassword =  async (req, res) => {
+//**Controller For Forgot Password */
+exports.forgotPassword = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { mobile } = req.body;
-
   try {
     const user = await User.findOne({ mobile });
-
-    console.log(user)
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
-
     // Generate OTP and send
     const otp = await sendOtp(mobile, user.otpRegenerationCount);
-    console.log('Generated OTP:', otp); // Add this line
-
     // Update user's OTP and regeneration count
     user.resetOTP = otp;
     user.otpRegenerationCount += 1;
     await user.save();
-
-    return res.status(200).json({ message: 'OTP sent to your mobile' });
+    return res.status(200).json({ message: "OTP sent to your mobile" });
   } catch (error) {
-    return res.status(500).json({ message: 'Error sending OTP', error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error sending OTP", error: error.message });
   }
-}
-exports.resetPassword= async (req, res) => {
+};
+//**Controller For Reset Password */
+exports.resetPassword = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { mobile, otp, newPassword } = req.body;
-
   try {
     const user = await User.findOne({ mobile });
-
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
-    console.log('User Stored OTP:', user.resetOTP); // Add this line
-    console.log('Received OTP:', otp); // Add this line
-
     if (parseInt(user.resetOTP) !== parseInt(otp)) {
-      return res.status(400).json({ message: 'Invalid OTP' });
+      return res.status(400).json({ message: "Invalid OTP" });
     }
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
-    user.resetOTP = null; // Invalidate the OTP
+    user.resetOTP = null; 
     await user.save();
-
-    return res.status(200).json({ message: 'Password reset successful' });
+    return res.status(200).json({ message: "Password reset successful" });
   } catch (error) {
-    return res.status(500).json({ message: 'Error resetting password', error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error resetting password", error: error.message });
   }
-}
+};

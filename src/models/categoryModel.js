@@ -2,11 +2,11 @@
 const mongoose = require('mongoose');
 //**Subcategory Schema */
 const subcategorySchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true ,min:6,max:25},
 });
 //**Category Schema */
 const categorySchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String, required: true, min:6,max:25},
   subcategories: [subcategorySchema],
 });
 

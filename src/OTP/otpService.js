@@ -1,36 +1,24 @@
-const axios = require('axios');
+const axios = require("axios");
 
-// const API_KEY = 'YOUR_FAST2SMS_API_KEY';
+const OTP_REGENERATION_LIMIT = 3;
 
-async function sendOtp(mobile, otp) {
-  const message = `Your OTP for verification is ${otp}. Please do not share it with anyone.`;
-  
-  const payload = {
-    sender_id: 'FSTSMS',
-    message,
-    language: 'english',
-    route: 'p',
-    numbers: mobile,
-  };
-
+async function sendOtp(mobile, otpRegenerationCount) {
+  if (otpRegenerationCount >= OTP_REGENERATION_LIMIT) {
+    throw new Error("OTP regeneration limit exceeded");
+  }
+  const otp = Math.floor(1000 + Math.random() * 9000);
   try {
-    const response = await axios.post('https://www.fast2sms.com/dev/bulk', payload, {
-      headers: {
-        Authorization: process.env.FAST2SMS_API_KEY
-      },
-    });
-
-    if (response.data && response.data.return) {
-      console.log('OTP sent successfully');
-      return true;
+    const response = await axios.get(
+      `https://www.fast2sms.com/dev/bulkV2?authorization=${process.env.FAST2SMS_API_KEY}&route=q&message=Your OTP code is ${otp}&language=english&flash=0&numbers=${mobile}`
+    );
+    if (response.data.return) {
+      return otp;
     } else {
-      console.error('Failed to send OTP');
-      return false;
+      throw new Error("Failed to send OTP");
     }
   } catch (error) {
-    console.error('Error sending OTP:', error.message);
-    return false;
+    throw error;
   }
 }
 
-module.exports = { sendOtp };
+module.exports = sendOtp;

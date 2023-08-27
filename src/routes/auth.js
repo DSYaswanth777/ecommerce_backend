@@ -2,27 +2,38 @@
 const express = require("express");
 //**Express Router initilaztion */
 const router = express.Router();
-//** Importing Passport for authentaction */
-const passport = require("../passport/passport");
-//**Importing Controllers*/
-const { signup, login, profileUpdate, changePassword, logout, verifyOTP, forgotPassword, resetPassword } = require("../controllers/authController");
-//** Initialize Passport middleware
-router.use(passport.initialize());
-router.use(passport.session());
+//**Importing Middleware */
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
-
+//**Importing Controllers*/
+const {
+  signup,
+  login,
+  profileUpdate,
+  changePassword,
+  verifyOTP,
+  forgotPassword,
+  resetPassword,
+} = require("../controllers/authController");
 //**Signup Route
 router.post("/signup", signup);
 //**  Login route
-router.post("/login",login);
+router.post("/login", login);
 //**Verify OTP route */
-router.post("/verify-otp", verifyOTP)
-//** Update profile route
-router.put("/update-profile", passport.authenticate('jwt', { session: false }), profileUpdate);
-//**  Change password route
-router.put('/change-password', passport.authenticate('jwt', { session: false }), changePassword);
-
-router.post("/forgot-password", forgotPassword)
-router.post("/reset-password", resetPassword)
-
+router.post("/verify-otp", verifyOTP);
+//** Update profile route */
+router.put(
+  "/update-profile",
+  authenticationMiddleware.isAuthenticated,
+  profileUpdate
+);
+//** Change password route */
+router.put(
+  "/change-password",
+  authenticationMiddleware.isAuthenticated,
+  changePassword
+);
+//**forgot Password */
+router.post("/forgot-password", forgotPassword);
+//**Reset Password */
+router.post("/reset-password", resetPassword);
 module.exports = router;

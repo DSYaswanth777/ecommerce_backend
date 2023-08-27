@@ -1,16 +1,11 @@
 //**Importing User Model */
 const User = require('../models/User');
-//**Importing Middlewares */
 
 //**Controller to get all customers */
-// Controller to fetch a list of customers
-// controllers/customerController.js
-
 exports.getCustomers = async (req, res) => {
   try {
     // Assuming you have a User model with necessary customer information
     const customers = await User.find({ role: 'customer' }); // Fetch all customers
-
     // If you want to customize the data before sending it in the response
     const formattedCustomers = customers.map(customer => ({
       id: customer.id,
@@ -24,8 +19,6 @@ exports.getCustomers = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch customers', error: error.message });
   }
 };
-
-
 //**Controller to search for a customer */
 exports.searchCustomers = [
   

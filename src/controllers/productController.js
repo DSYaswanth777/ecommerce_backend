@@ -1,10 +1,10 @@
-const Product = require("../models/productModel"); // Import the Product model
-const multer = require("multer"); // For handling file uploads
-const upload = multer({ dest: "uploads/" }); // Define a destination for uploaded files
-//**Importing Middlewares */
-const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
-const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
-//** Add Product controller
+//**  Product model Import */
+const Product = require("../models/productModel"); 
+//**Multer for handling File Uploads */ 
+const multer = require("multer"); 
+//** Destination for uploaded files */
+const upload = multer({ dest: "uploads/" }); 
+//** Add Product controller */
 exports.addProduct = [
   upload.array("productImages", 5), // Assuming a maximum of 5 images can be uploaded
   async (req, res) => {
@@ -56,7 +56,6 @@ exports.getAllProducts = async (req, res) => {
 };
 //**  Edit Product controller
 exports.editProduct = [
-  
   async (req, res) => {
     try {
       const productId = req.params.productId;

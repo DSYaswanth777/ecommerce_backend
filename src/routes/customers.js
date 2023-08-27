@@ -2,25 +2,24 @@
 const express = require("express");
 //**Router Initilaztion */
 const router = express.Router();
-const passport = require("../passport/passport");
-
 //**Importing Controllers */
 const {
   getCustomers,
 } = require("../controllers/customerController");
 //**Importing Middlewares */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
+const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 //**Route to get all Customers */
 router.get(
   "/customers",
-  passport.authenticate('jwt', { session: false }),
+  authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   getCustomers
 );
-
+//**Route to search for a customer */
 router.get(
  "/search-customer",
- passport.authenticate('jwt',{session:false} ),
+ authenticationMiddleware.isAuthenticated,
  authorizationMiddleware.isAdmin
 )
 module.exports = router;

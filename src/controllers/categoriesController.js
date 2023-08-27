@@ -2,10 +2,6 @@
 const mongoose = require("mongoose");
 //**Importing category Model */
 const { Category, Subcategory } = require("../models/categoryModel");
-//**Importing Middlewares */
-const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
-const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
-
 //**Get all categories controller */
 exports.getAllCategories = async (req, res) => {
   try {
@@ -19,8 +15,6 @@ exports.getAllCategories = async (req, res) => {
 };
 //**Add Category controller */
 exports.addCategory = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
   async (req, res) => {
     try {
       const newCategory = await Category.create({ name: req.body.name });
@@ -34,8 +28,6 @@ exports.addCategory = [
 ];
 //**Add Sub Category controller */
 exports.addSubCategory = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
   async (req, res) => {
     try {
       const category = await Category.findById(req.params.categoryId);
@@ -55,8 +47,6 @@ exports.addSubCategory = [
 ];
 //**Delete Category controller */
 exports.deleteCategory = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
   async (req, res) => {
     try {
       const category = await Category.findByIdAndDelete(req.params.categoryId);
@@ -73,8 +63,6 @@ exports.deleteCategory = [
 ];
 //**Delete Sub Category controller */
 exports.deleteSubCategory = [
-  authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
   async (req, res) => {
     try {
       const categoryId = req.params.categoryId;

@@ -10,10 +10,9 @@ const {
   deleteCategory,
   deleteSubCategory,
 } = require("../controllers/categoriesController");
-
+//**Importing Middleware */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
-
 //**Route for get all categories */
 router.get("/categories", getAllCategories);
 //**Route to add a category */
@@ -44,5 +43,4 @@ router.delete(
   authorizationMiddleware.isAdmin,
   deleteSubCategory
 );
-
 module.exports = router;

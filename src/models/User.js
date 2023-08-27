@@ -1,13 +1,15 @@
 //**Mongoose import */
-const mongoose = require('mongoose');
-
+const mongoose = require("mongoose");
+//**Importing Validators */
+const { nameValidator, passwordValidator } = require("../OTP/validators");
 //** UserSchema */
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
     minlength: 5,
     maxlength: 50,
+    validate: nameValidator,
+    required: true,
   },
   age: {
     type: Number,
@@ -30,23 +32,24 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
+    minlength: 6,
+    maxlength: 12,
+    validate:passwordValidator,
     required: true,
   },
   role: {
     type: String,
-    enum: ['admin', 'customer'], 
-    default: 'customer', 
+    enum: ["admin", "customer"],
+    default: "customer",
   },
-  
   otp: {
     type: Number,
     required: false,
   },
   resetOTP: {
-    type:String,
-    required:false,
+    type: String,
+    required: false,
   },
-
   isVerified: {
     type: Boolean,
     default: false, // New field to indicate if the user is verified
@@ -55,7 +58,7 @@ const userSchema = new mongoose.Schema({
     {
       product: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product', // Reference to the Product model
+        ref: "Product", // Reference to the Product model
       },
       quantity: {
         type: Number,
@@ -65,4 +68,4 @@ const userSchema = new mongoose.Schema({
   ],
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

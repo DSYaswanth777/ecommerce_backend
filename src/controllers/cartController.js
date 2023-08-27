@@ -1,11 +1,12 @@
+//**Importing User Model */
 const User = require("../models/User");
+//**Importing Product Model */
 const Product = require("../models/productModel");
-
+//**addProduct to cart controller */
 exports.addProductToCart = async (req, res) => {
     try {
       const userId = req.user.id;
       const { productId } = req.body;
-  
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -35,7 +36,7 @@ exports.addProductToCart = async (req, res) => {
       res.status(500).json({ message: "An error occurred while adding product to cart" });
     }
   };
-  
+//**Increase cart Item Quantity controller */
 exports.increaseCartItemQuantity = async (req, res) => {
     try {
       const userId = req.user.id;
@@ -60,6 +61,7 @@ exports.increaseCartItemQuantity = async (req, res) => {
       res.status(500).json({ message: "An error occurred while increasing cart item quantity" });
     }
   };
+//**Decrease cart Item Quantity controller */
 exports.decreaseCartItemQuantity = async (req, res) => {
     try {
       const userId = req.user.id;
@@ -90,6 +92,7 @@ exports.decreaseCartItemQuantity = async (req, res) => {
       res.status(500).json({ message: "An error occurred while decreasing cart item quantity" });
     }
   };
+//**Get User Cart controller */
 exports.getUserCart = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -120,6 +123,7 @@ exports.getUserCart = async (req, res) => {
       .json({ message: "An error occurred while fetching user's cart" });
   }
 };
+//**Remove Product from Cart */
 exports.removeProductFromCart = async (req, res) => {
   try {
     const userId = req.user.id;
