@@ -24,7 +24,6 @@ exports.getAllCategories = async (req, res) => {
       .json({ message: "An error occurred while fetching categories" });
   }
 };
-
 //**Add Category controller */
 exports.addCategory = [
   async (req, res) => {

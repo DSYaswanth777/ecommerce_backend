@@ -100,6 +100,11 @@ exports.getUserCart = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    if (user.cart.length === 0) {
+      res.status(200).json({ cartItems: user.cart, totalFee: 0 });
+      return;
+    }
+
     let totalFee = 0;
     user.cart.forEach((cartItem) => {
       const product = cartItem.product;
@@ -128,12 +133,10 @@ exports.removeProductFromCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const cartItemId = req.params.cartItemId;
-
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     // Remove the cart item from the user's cart
     user.cart.pull(cartItemId);
     await user.save();
