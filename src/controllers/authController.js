@@ -8,6 +8,11 @@ const jwt = require("jsonwebtoken");
 const sendOtp = require("../OTP/otpService");
 //**Import express validation */
 const { validationResult } = require("express-validator");
+const nodemailer = require("nodemailer");
+const handlebars = require("handlebars");
+const fs = require("fs");
+const path = require("path");
+
 //**Token Generation */
 const generateToken = (user) => {
   return jwt.sign(
@@ -86,9 +91,12 @@ exports.verifyOTP = async (req, res) => {
 
     if (user.otp === otp) {
       // OTP is valid
-      user.otp = null; // Clear the OTP after successful verification
-      user.isVerified = true; // Set the isVerified flag to true
+      user.otp = null;
+      user.isVerified = true;
       await user.save();
+
+      // Send welcome email to the user
+      sendWelcomeEmail(user.email, user.name);
 
       return res.status(200).json({ message: "OTP verified successfully" });
     } else {
@@ -101,6 +109,38 @@ exports.verifyOTP = async (req, res) => {
       .json({ message: "OTP verification failed", error: error.message });
   }
 };
+
+// Function to send welcome email
+function sendWelcomeEmail(to, recipientName, senderName) {
+  const transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE_PROVIDER,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+  const templatePath = path.join(__dirname, "..", "email", "emailTemplate.html");
+
+  const source = fs.readFileSync(templatePath, "utf8");
+  const template = handlebars.compile(source);
+  const html = template({ name: recipientName });
+
+  const mailOptions = {
+    from: `"${senderName}" <${process.env.EMAIL_USER}>`,
+    to: to,
+    subject: "Welcome to Your Website",
+    html: html,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log("Error sending welcome email:", error);
+    } else {
+      console.log("Welcome email sent:", info.response);
+    }
+  });
+}
+
 //**Controller For Login */
 exports.login = async (req, res, next) => {
   const errors = validationResult(req);
@@ -121,6 +161,9 @@ exports.login = async (req, res, next) => {
     }
     const token = generateToken(user);
 
+    // Send welcome email to the user
+    sendWelcomeEmail(user.email, user.name);
+
     return res.status(200).json({
       message: `${user.name}, You have successfully Logged In Happy Shopping`,
       token: token,
@@ -140,6 +183,7 @@ exports.login = async (req, res, next) => {
       .json({ message: "Login failed", error: error.message });
   }
 };
+
 //**Controller For Update Profile */
 exports.profileUpdate = async (req, res) => {
   const userId = req.user.id;
