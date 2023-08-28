@@ -1,5 +1,7 @@
 //**Mongoose import */
 const mongoose = require("mongoose");
+mongoose.set('strictQuery', false);
+
 //**Importing Validators */
 const { nameValidator, passwordValidator } = require("../utilities/validators");
 //** UserSchema */
