@@ -4,14 +4,14 @@ const cors = require("cors");
 const passport = require("passport");
 const session = require("express-session");
 const flash = require("connect-flash");
-const connectToDatabase = require("../src/config/database");
+const connectToDatabase = require("./src/config/database");
 //**Route Import */
-const authRoutes = require("../src/routes/auth");
-const customersRoutes = require("../src/routes/customers");
-const categoryRoutes = require("../src/routes/category");
-const productRoutes = require("../src/routes/product")
-const cartRoutes = require("../src/routes/cart")
-const wishlistRoutes = require("../src/routes/wishlist")
+const authRoutes = require("./src/routes/auth");
+const customersRoutes = require("./src/routes/customers");
+const categoryRoutes = require("./src/routes/category");
+const productRoutes = require("./src/routes/product")
+const cartRoutes = require("./src/routes/cart")
+const wishlistRoutes = require("./src/routes/wishlist")
 dotenv.config();
 
 const app = express();
@@ -20,7 +20,6 @@ const app = express();
 app.use(express.json());
 // app.use(bodyParser.json()); // Add this line to parse JSON
 
-app.use(cors());
 
 // Set up session and flash middleware
 app.use(
