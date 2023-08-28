@@ -1,7 +1,7 @@
 //**Mongoose import */
 const mongoose = require("mongoose");
 //**Importing Validators */
-const { nameValidator, passwordValidator } = require("../OTP/validators");
+const { nameValidator, passwordValidator } = require("../utilities/validators");
 //** UserSchema */
 const userSchema = new mongoose.Schema({
   name: {

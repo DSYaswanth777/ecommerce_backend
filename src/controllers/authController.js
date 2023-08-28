@@ -5,14 +5,17 @@ const bcrypt = require("bcryptjs");
 //**Import jwt for token generration */
 const jwt = require("jsonwebtoken");
 //**Importing OTP service */
-const sendOtp = require("../OTP/otpService");
+const sendOtp = require("../utilities/otpService");
 //**Import express validation */
 const { validationResult } = require("express-validator");
+//** Import Node Emailer */
 const nodemailer = require("nodemailer");
+//** Import handle bars */
 const handlebars = require("handlebars");
+//**Import file system module */
 const fs = require("fs");
+//**Import path from module */
 const path = require("path");
-
 //**Token Generation */
 const generateToken = (user) => {
   return jwt.sign(
@@ -21,6 +24,36 @@ const generateToken = (user) => {
     { expiresIn: "1h" }
   );
 };
+//**Function to send welcome email
+function sendWelcomeEmail(to, recipientName, senderName) {
+  const transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE_PROVIDER,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  });
+  const templatePath = path.join(__dirname, "..", "email", "emailTemplate.html");
+
+  const source = fs.readFileSync(templatePath, "utf8");
+  const template = handlebars.compile(source);
+  const html = template({ name: recipientName });
+
+  const mailOptions = {
+    from: `"${senderName}" <${process.env.EMAIL_USER}>`,
+    to: to,
+    subject: "Welcome to Your Website",
+    html: html,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log("Error sending welcome email:", error);
+    } else {
+      console.log("Welcome email sent:", info.response);
+    }
+  });
+}
 //**Controller For Signup */
 exports.signup = async (req, res) => {
   const errors = validationResult(req);
@@ -109,38 +142,6 @@ exports.verifyOTP = async (req, res) => {
       .json({ message: "OTP verification failed", error: error.message });
   }
 };
-
-// Function to send welcome email
-function sendWelcomeEmail(to, recipientName, senderName) {
-  const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE_PROVIDER,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-  const templatePath = path.join(__dirname, "..", "email", "emailTemplate.html");
-
-  const source = fs.readFileSync(templatePath, "utf8");
-  const template = handlebars.compile(source);
-  const html = template({ name: recipientName });
-
-  const mailOptions = {
-    from: `"${senderName}" <${process.env.EMAIL_USER}>`,
-    to: to,
-    subject: "Welcome to Your Website",
-    html: html,
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log("Error sending welcome email:", error);
-    } else {
-      console.log("Welcome email sent:", info.response);
-    }
-  });
-}
-
 //**Controller For Login */
 exports.login = async (req, res, next) => {
   const errors = validationResult(req);
@@ -183,7 +184,6 @@ exports.login = async (req, res, next) => {
       .json({ message: "Login failed", error: error.message });
   }
 };
-
 //**Controller For Update Profile */
 exports.profileUpdate = async (req, res) => {
   const userId = req.user.id;
