@@ -96,13 +96,9 @@ exports.decreaseCartItemQuantity = async (req, res) => {
 exports.getUserCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId).populate("cart.product");
+    const user = await User.findById(userId).populate('cart.product');
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    if (user.cart.length === 0) {
-      res.status(200).json({ cartItems: user.cart, totalFee: 0 });
-      return;
+      return res.status(404).json({ message: 'User not found' });
     }
 
     let totalFee = 0;
@@ -112,7 +108,10 @@ exports.getUserCart = async (req, res) => {
       totalFee += itemTotal;
     });
 
-    // Apply delivery charge logic
+    if (user.appliedCoupon && user.appliedCoupon.discountAmount > 0) {
+      totalFee -= user.appliedCoupon.discountAmount;
+    }
+
     let deliveryCharge = 50;
     if (user.cart.length >= 4 || user.cart.some((item) => item.quantity >= 4)) {
       deliveryCharge = 0;
@@ -122,10 +121,8 @@ exports.getUserCart = async (req, res) => {
 
     res.status(200).json({ cartItems: user.cart, totalFee });
   } catch (error) {
-    console.error("Error fetching user's cart:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while fetching user's cart" });
+    console.error('Error fetching user\'s cart:', error);
+    res.status(500).json({ message: 'An error occurred while fetching user\'s cart' });
   }
 };
 //**Remove Product from Cart */

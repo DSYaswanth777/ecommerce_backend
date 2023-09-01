@@ -2,65 +2,23 @@
 const User = require("../models/User");
 //** Importing bcrypt for password hashing */
 const bcrypt = require("bcryptjs");
-//**Import jwt for token generration */
-const jwt = require("jsonwebtoken");
 //**Importing OTP service */
 const sendOtp = require("../utilities/otpService");
 //**Import express validation */
 const { validationResult } = require("express-validator");
-//** Import Node Emailer */
-const nodemailer = require("nodemailer");
-//** Import handle bars */
-const handlebars = require("handlebars");
-//**Import file system module */
-const fs = require("fs");
-//**Import path from module */
-const path = require("path");
-//**Token Generation */
-const generateToken = (user) => {
-  return jwt.sign(
-    { id: user.id, username: user.username, role: "customer" },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" }
-  );
-};
-//**Function to send welcome email
-function sendWelcomeEmail(to, recipientName, senderName) {
-  const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE_PROVIDER,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-  });
-  const templatePath = path.join(__dirname, "..", "email", "emailTemplate.html");
+//**Importing Email utility */
+const { sendWelcomeEmail } = require("../utilities/welcomeEmail");
+//**Importing Token Geneartion utility */
+const { generateToken } = require("../utilities/tokenGeneration");
 
-  const source = fs.readFileSync(templatePath, "utf8");
-  const template = handlebars.compile(source);
-  const html = template({ name: recipientName });
-
-  const mailOptions = {
-    from: `"${senderName}" <${process.env.EMAIL_USER}>`,
-    to: to,
-    subject: "Welcome to Your Website",
-    html: html,
-  };
-
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log("Error sending welcome email:", error);
-    } else {
-      console.log("Welcome email sent:", info.response);
-    }
-  });
-}
 //**Controller For Signup */
 exports.signup = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  const { name, age, mobile, email, password, confirmPassword } = req.body;
+  const { name, age, mobile, email, password, confirmPassword } =
+    req.body;
   // Check if passwords match
   if (password !== confirmPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
@@ -98,7 +56,7 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       otp,
       role: "customer",
-      otpRegenerationCount: 1, // Initial count
+      otpRegenerationCount: 1, 
       isVerified: false,
     });
     await newUser.save();
@@ -131,7 +89,7 @@ exports.verifyOTP = async (req, res) => {
       // Send welcome email to the user
       sendWelcomeEmail(user.email, user.name);
 
-      return res.status(200).json({ message: "OTP verified successfully" });
+      return res.status(200).json({ message: "OTP verified successfully! You Can Login Now" });
     } else {
       // Invalid OTP
       return res.status(400).json({ message: "Invalid OTP" });
@@ -143,7 +101,7 @@ exports.verifyOTP = async (req, res) => {
   }
 };
 //**Controller For Login */
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -170,8 +128,7 @@ exports.login = async (req, res, next) => {
       token: token,
       user: {
         id: user.id,
-        username: user.username,
-        name: user.name,
+        name:user.name,
         mobile: user.mobile,
         email: user.email,
         age: user.age,
@@ -285,7 +242,7 @@ exports.resetPassword = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
-    user.resetOTP = null; 
+    user.resetOTP = null;
     await user.save();
     return res.status(200).json({ message: "Password reset successful" });
   } catch (error) {

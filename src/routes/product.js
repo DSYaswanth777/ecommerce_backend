@@ -19,7 +19,8 @@ router.post(
   "/addproduct",
   addProduct,
   authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
+  authorizationMiddleware.isAdmin,  authenticationMiddleware.isAuthenticated,
+
 );
 //**Get all products 
 router.get("/products", getAllProducts);

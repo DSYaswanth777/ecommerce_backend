@@ -74,6 +74,10 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
+  appliedCoupon: {
+    code: String, // Store the applied coupon code
+    discountAmount: Number, // Store the discount amount
+  },
 });
 
 module.exports = mongoose.model("User", userSchema);
