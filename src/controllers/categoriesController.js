@@ -114,3 +114,20 @@ exports.deleteSubCategory = [
     }
   }
 ];
+//**  Search Categories controller */
+exports.searchCategories = async (req, res) => {
+  try {
+    // Get the search query from the request parameters
+    const query = req.query.q;
+    // Define a regex pattern to search for the query in category names
+    const regexPattern = new RegExp(query, "i"); // "i" makes the search case-insensitive
+    // Use Mongoose to search for categories whose names match the query
+    const categories = await Category.find({ name: regexPattern });
+    res.status(200).json({
+      categories,
+    });
+  } catch (error) {
+    console.error("Error searching categories:", error);
+    res.status(500).json({ message: "An error occurred while searching categories" });
+  }
+};

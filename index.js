@@ -1,10 +1,10 @@
   const express = require("express");
   const dotenv = require("dotenv");
-  const cors = require("cors");
   const passport = require("passport");
   const session = require("express-session");
   const flash = require("connect-flash");
   const connectToDatabase = require("./src/config/database");
+  const cors = require("cors"); 
   //**Route Import */
   const authRoutes = require("./src/routes/auth");
   const customersRoutes = require("./src/routes/customers");
@@ -19,9 +19,13 @@
 
   // Middleware
   app.use(express.json());
-  // app.use(bodyParser.json()); // Add this line to parse JSON
 
-
+  const corsOptions = {
+    origin: "http://localhost:5173", // Replace with the actual origin of your frontend
+    credentials: true, // Enable credentials (cookies, authorization headers)
+  };
+  
+  app.use(cors(corsOptions));
   // Set up session and flash middleware
   app.use(
     session({
@@ -48,7 +52,7 @@
   app.use("/",couponRoutes)
 
   // Start the server
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 5173;
   const server = app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
   });

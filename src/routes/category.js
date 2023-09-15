@@ -9,6 +9,7 @@ const {
   addSubCategory,
   deleteCategory,
   deleteSubCategory,
+  searchCategories,
 } = require("../controllers/categoriesController");
 //**Importing Middleware */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
@@ -43,4 +44,7 @@ router.delete(
   authorizationMiddleware.isAdmin,
   deleteSubCategory
 );
+//**Route to search a category */
+router.get("/categories/search", searchCategories);
+
 module.exports = router;
