@@ -35,7 +35,9 @@
     })
   );
   app.use(flash());
-
+  app.get('/', (req, res) => {
+    res.send('Hey this is my API running 🥳')
+  })
   // Initialize Passport
   app.use(passport.initialize());
 
