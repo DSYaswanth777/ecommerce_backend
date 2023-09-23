@@ -1,10 +1,10 @@
-// models/Coupon.js
+//**Mongoose Import */
 const mongoose = require('mongoose');
-
+//**Coupon Code Schema */
 const couponSchema = new mongoose.Schema({
   code: {
     type: String,
-    unique: true, // Ensure uniqueness of coupon codes
+    unique: true, 
     required: true,
   },
   discountedAmount: {
@@ -12,12 +12,12 @@ const couponSchema = new mongoose.Schema({
     required: true,
   },
   maxUses: {
-    type: Number, // Maximum number of times the coupon can be used
-    default: null, // Null means no usage limit
+    type: Number, 
+    default: null, 
   },
   expirationDate: {
-    type: Date, // Date when the coupon expires
-    default: null, // Null means no expiration date
+    type: Date, 
+    default: null,
   },
 });
 

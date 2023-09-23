@@ -1,8 +1,7 @@
-// routes/couponRoutes.js
 const User = require("../models/User");
 const Coupon = require("../models/couponModel");
 
-// Controller to add a new coupon
+//** Controller to add a new coupon */
 exports.addCouponCode = async (req, res) => {
   try {
     const { code, discountedAmount, maxUses, expirationDate } = req.body;
@@ -25,7 +24,7 @@ exports.addCouponCode = async (req, res) => {
       .json({ message: "An error occurred while adding the coupon code" });
   }
 };
-// Controller to apply a coupon to the user's cart
+//**Controller to apply a coupon to the user's cart */
 exports.applyCouponCode = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -54,6 +53,7 @@ exports.applyCouponCode = async (req, res) => {
       .json({ message: "An error occurred while applying the coupon" });
   }
 };
+//**Controller to delete a coupon to the user's cart */
 exports.deleteCouponCode = async (req, res) => {
   try {
     const { couponId } = req.params;
@@ -73,6 +73,7 @@ exports.deleteCouponCode = async (req, res) => {
       .json({ message: "An error occurred while deleting the coupon" });
   }
 };
+//**Controller to edit a coupon to the user's cart */
 exports.editCouponCode = async (req, res) => {
   try {
     const { couponId } = req.params;

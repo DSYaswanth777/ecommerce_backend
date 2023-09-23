@@ -3,8 +3,6 @@ mongoose.set('strictQuery', false);
 
 const productSchema = new mongoose.Schema({
   productName: { type: String, required: true, min:6, max:25},
-  productMRP: { type: Number, required: true },
-  productDiscount: { type: Number, required: true },
   productPrice: { type: Number, required: true },
   productImages: [{ type: String, required: true }],
   productInfo: { type: String, required: true, min:10 },

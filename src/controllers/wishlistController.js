@@ -46,6 +46,7 @@ exports.addProductToWishlist = async (req, res) => {
         .json({ message: "An error occurred while adding product to wishlist" });
     }
   };
+//**Get User Wishlist Controller */
   exports.getUserWishlist = async (req, res) => {
     try {
       const userId = req.user.id;

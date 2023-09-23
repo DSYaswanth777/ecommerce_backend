@@ -13,12 +13,6 @@ const userSchema = new mongoose.Schema({
     validate: nameValidator,
     required: true,
   },
-  age: {
-    type: Number,
-    required: true,
-    min: 12,
-    max: 98,
-  },
   mobile: {
     type: String,
     required: true,

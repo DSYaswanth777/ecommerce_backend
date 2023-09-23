@@ -18,15 +18,14 @@ exports.addProduct = [
     try {
       const {
         productName,
-        productMRP,
-        productDiscount,
+        productPrice,
         productInfo,
         productColorOptions,
         subcategoryId,
         productStock
       } = req.body;
 
-      const productPrice = productMRP - productDiscount;
+      // const productPrice = productMRP - productDiscount;
       const uploadedImages = await Promise.all(
         req.files.map(async (file) => {
           const result = await cloudinary.uploader.upload(file.path);
@@ -35,8 +34,6 @@ exports.addProduct = [
       );
       const newProduct = await Product.create({
         productName,
-        productMRP,
-        productDiscount,
         productPrice,
         productImages:uploadedImages,
         productInfo,

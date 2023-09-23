@@ -17,7 +17,7 @@ exports.signup = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  const { name, age, mobile, email, password, confirmPassword } =
+  const { name, mobile, email, password, confirmPassword } =
     req.body;
   // Check if passwords match
   if (password !== confirmPassword) {
@@ -50,7 +50,6 @@ exports.signup = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10); // Create a new user
     const newUser = new User({
       name,
-      age,
       mobile,
       email,
       password: hashedPassword,
@@ -131,7 +130,6 @@ exports.login = async (req, res) => {
         name:user.name,
         mobile: user.mobile,
         email: user.email,
-        age: user.age,
         role: user.role,
       },
     });
@@ -256,7 +254,7 @@ exports.getUserProfile = async (req, res) => {
   const userId = req.user.id;
   try {
     const user = await User.findById(userId);
-
+    console.log(user)
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -264,9 +262,11 @@ exports.getUserProfile = async (req, res) => {
     return res.status(200).json({
       id: user.id,
       name: user.name,
-      age: user.age,
       mobile: user.mobile,
       email: user.email,
+      wishlist:user.wishlist,
+      cart:user.cart,
+      coupon:user.appliedCoupon
     });
   } catch (error) {
     return res
