@@ -17,16 +17,16 @@
 
   const app = express();
 
-  // Middleware
+  //** Middleware */
   app.use(express.json());
 
   const corsOptions = {
-    origin: "http://localhost:5173", // Replace with the actual origin of your frontend
-    credentials: true, // Enable credentials (cookies, authorization headers)
+    origin: "http://localhost:5173", 
+    credentials: true,
   };
   
   app.use(cors(corsOptions));
-  // Set up session and flash middleware
+  //**  Set up session and flash middleware 
   app.use(
     session({
       secret: process.env.SESSION_SECRET,
@@ -45,13 +45,13 @@
   connectToDatabase(); // Call the database connection function
 
   // Routes
-  app.use("/", authRoutes); // Signup and Login
-  app.use("/", customersRoutes); // Customers Route
-  app.use("/", categoryRoutes); // Category Routes
-  app.use("/", productRoutes);
-  app.use("/",cartRoutes);
-  app.use("/",wishlistRoutes)
-  app.use("/",couponRoutes)
+  app.use("/api/v1", authRoutes); // Signup and Login
+  app.use("/api/v1", customersRoutes); // Customers Route
+  app.use("/api/v1", categoryRoutes); // Category Routes
+  app.use("/api/v1", productRoutes);
+  app.use("/api/v1",cartRoutes);
+  app.use("/api/v1",wishlistRoutes)
+  app.use("/api/v1",couponRoutes)
 
   // Start the server
   const PORT = process.env.PORT || 5173;

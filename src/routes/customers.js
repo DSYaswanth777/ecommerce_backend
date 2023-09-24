@@ -4,22 +4,23 @@ const express = require("express");
 const router = express.Router();
 //**Importing Controllers */
 const {
-  getCustomers,
+  getCustomers, searchCustomers,
 } = require("../controllers/customerController");
 //**Importing Middlewares */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 //**Route to get all Customers */
 router.get(
-  "/customers",
+  "/admin/customers",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   getCustomers
 );
 //**Route to search for a customer */
 router.get(
- "/search-customer",
+ "/admin/search-customer",
  authenticationMiddleware.isAuthenticated,
- authorizationMiddleware.isAdmin
+ authorizationMiddleware.isAdmin,
+ searchCustomers
 )
 module.exports = router;

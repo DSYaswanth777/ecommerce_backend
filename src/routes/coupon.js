@@ -13,7 +13,7 @@ const authorizationMiddleware = require("../middlewares/authorizationMiddleware"
 
 //**  Route to add a new coupon*/
 router.post(
-  "/add-coupon",
+  "/admin/add-coupon",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   addCouponCode
@@ -26,14 +26,14 @@ router.post(
 );
 //**Route to Edit Coupon */
 router.patch(
-    "/edit-coupon/:couponId",
+    "/admin/edit-coupon/:couponId",
     authenticationMiddleware.isAuthenticated,
     authorizationMiddleware.isAdmin,
     editCouponCode
 )
 //**Route to Delete Coupon */
 router.delete(
-  "/delete-coupon/:couponId",
+  "/admin/delete-coupon/:couponId",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   deleteCouponCode

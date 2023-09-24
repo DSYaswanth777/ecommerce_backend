@@ -14,38 +14,31 @@ const router = express.Router();
 //**Importing Middleware */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
-//**Add product 
+//**Add product
 router.post(
-  "/addproduct",
+  "/admin/add/product",
   addProduct,
   authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,  authenticationMiddleware.isAuthenticated,
-
+  authorizationMiddleware.isAdmin,
 );
-//**Get all products 
+//**Get all products
 router.get("/products", getAllProducts);
 //**Edit Product */
 router.put(
-  "/products/:productId",
+  "/admin/products/:productId",
   editProduct,
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin
 );
 //**Delete Product */
 router.delete(
-  "/products/delete/:productId",
+  "/admin/products/delete/:productId",
   deleteProduct,
   authenticationMiddleware.isAuthenticated,
-  authorizationMiddleware.isAdmin,
+  authorizationMiddleware.isAdmin
 );
 //**Filter products based on category */
-router.get(
-    "/filterproducts",
-    getFilteredProducts
-)
+router.get("/filterproducts", getFilteredProducts);
 //**Search for a product based on product name */
-router.get(
-    "/productsearch",
-    searchProductsByName
-)
+router.get("/productsearch", searchProductsByName);
 module.exports = router;

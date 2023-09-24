@@ -20,12 +20,9 @@ exports.addProduct = [
         productName,
         productPrice,
         productInfo,
-        productColorOptions,
         subcategoryId,
         productStock
       } = req.body;
-
-      // const productPrice = productMRP - productDiscount;
       const uploadedImages = await Promise.all(
         req.files.map(async (file) => {
           const result = await cloudinary.uploader.upload(file.path);
@@ -83,13 +80,11 @@ exports.editProduct = [
     try {
       const productId = req.params.productId;
       const updatedFields = req.body;
-
       // You can check if the product exists in the database
       const existingProduct = await Product.findById(productId);
       if (!existingProduct) {
         return res.status(404).json({ message: "Product not found" });
       }
-
       // Delete existing images from Cloudinary
       for (const imageUrl of existingProduct.productImages) {
         const public_id = imageUrl.split('/').pop().split('.')[0];

@@ -18,21 +18,21 @@ const authenticationMiddleware = require("../middlewares/authenticationMiddlewar
 router.get("/categories", getAllCategories);
 //**Route to add a category */
 router.post(
-  "/categories",
+  "/admin/add/category",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   addCategory
 );
 //**Route to add a SubCategory */
 router.post(
-  "/categories/:categoryId/subcategories",
+  "/admin/add/categories/:categoryId/subcategory",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   addSubCategory
 );
 //**Route to delete a Category */
 router.delete(
-  "/categories/:categoryId",
+  "/admin/delete/categories/:categoryId",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   deleteCategory
