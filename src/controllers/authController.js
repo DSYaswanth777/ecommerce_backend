@@ -113,10 +113,16 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Incorrect username" });
     }
+    
+    if (!user.isVerified) {
+      return res.status(401).json({ message: "Account not verified. Please verify your account first." });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Incorrect password" });
     }
+    
     const token = generateToken(user);
 
     // Send welcome email to the user
@@ -127,7 +133,7 @@ exports.login = async (req, res) => {
       token: token,
       user: {
         id: user.id,
-        name:user.name,
+        name: user.name,
         mobile: user.mobile,
         email: user.email,
         role: user.role,
@@ -139,6 +145,7 @@ exports.login = async (req, res) => {
       .json({ message: "Login failed", error: error.message });
   }
 };
+
 //**Controller For Update Profile */
 exports.profileUpdate = async (req, res) => {
   const userId = req.user.id;
