@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 //**Importing category Model */
 const { Category, Subcategory } = require("../models/categoryModel");
+
 //**Get all categories controller */
 exports.getAllCategories = async (req, res) => {
   try {

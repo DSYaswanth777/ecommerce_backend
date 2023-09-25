@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 mongoose.set('strictQuery', false);
 
 //**Importing Validators */
-const { nameValidator, passwordValidator } = require("../utilities/validators");
+const { nameValidator } = require("../utilities/validators");
 //** UserSchema */
 const userSchema = new mongoose.Schema({
   name: {
