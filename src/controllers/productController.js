@@ -1,4 +1,5 @@
 //**  Product model Import */
+const { Subcategory } = require("../models/categoryModel");
 const Product = require("../models/productModel"); 
 //**Multer for handling File Uploads */ 
 const multer = require("multer"); 
@@ -23,18 +24,26 @@ exports.addProduct = [
         subcategoryId,
         productStock
       } = req.body;
+
+      // Check if the subcategory with the specified subcategoryId exists
+      const subcategory = await Subcategory.findById(subcategoryId);
+
+      if (!subcategory) {
+        return res.status(400).json({ message: "Invalid subcategoryId" });
+      }
+
       const uploadedImages = await Promise.all(
         req.files.map(async (file) => {
           const result = await cloudinary.uploader.upload(file.path);
           return result.secure_url;
         })
       );
+      
       const newProduct = await Product.create({
         productName,
         productPrice,
-        productImages:uploadedImages,
+        productImages: uploadedImages,
         productInfo,
-        productColorOptions,
         subcategoryId,
         productStock
       });
@@ -73,7 +82,6 @@ exports.getAllProducts = async (req, res) => {
       .json({ message: "An error occurred while fetching products" });
   }
 };
-
 //**  Edit Product controller
 exports.editProduct = [
   async (req, res) => {
@@ -129,7 +137,6 @@ exports.editProduct = [
     }
   },
 ];
-
 //**  Delete Product controller
 exports.deleteProduct = [
   async (req, res) => {

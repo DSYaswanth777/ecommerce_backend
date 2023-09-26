@@ -2,7 +2,7 @@
 const mongoose = require("mongoose");
 //**Importing category Model */
 const { Category, Subcategory } = require("../models/categoryModel");
-
+const Product = require("../models/productModel");
 //**Get all categories controller */
 exports.getAllCategories = async (req, res) => {
   try {
@@ -57,11 +57,19 @@ exports.addSubCategory = [
     }
   }
 ];
-//**Delete Category controller */
 exports.deleteCategory = [
   async (req, res) => {
     try {
-      const category = await Category.findByIdAndDelete(req.params.categoryId);
+      const categoryId = req.params.categoryId;
+      
+      // Check if there are any products associated with this category
+      const productsInCategory = await Product.find({ subcategoryId: categoryId });
+      
+      if (productsInCategory.length > 0) {
+        return res.status(400).json({ message: "Cannot delete category with associated products" });
+      }
+
+      const category = await Category.findByIdAndDelete(categoryId);
       if (!category) {
         return res.status(404).json({ message: "Category not found" });
       }
@@ -73,12 +81,19 @@ exports.deleteCategory = [
     }
   }
 ];
-//**Delete Sub Category controller */
+//**Delete Sub Category controller*/
 exports.deleteSubCategory = [
   async (req, res) => {
     try {
       const categoryId = req.params.categoryId;
       const subcategoryId = req.params.subcategoryId;
+
+      // Check if there are any products associated with this subcategory
+      const productsInSubcategory = await Product.find({ subcategoryId });
+      
+      if (productsInSubcategory.length > 0) {
+        return res.status(400).json({ message: "Cannot delete subcategory with associated products" });
+      }
 
       if (
         !mongoose.Types.ObjectId.isValid(categoryId) ||
@@ -115,7 +130,7 @@ exports.deleteSubCategory = [
     }
   }
 ];
-//**  Search Categories controller */
+//**Search Categories controller */
 exports.searchCategories = async (req, res) => {
   try {
     // Get the search query from the request parameters

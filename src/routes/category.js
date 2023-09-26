@@ -39,7 +39,7 @@ router.delete(
 );
 //**Route to delete a Sub Category */
 router.delete(
-  "/categories/:categoryId/subcategories/:subcategoryId",
+  "/admin/delete/categories/:categoryId/subcategories/:subcategoryId",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   deleteSubCategory
