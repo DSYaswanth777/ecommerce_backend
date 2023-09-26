@@ -68,10 +68,20 @@ exports.getAllProducts = async (req, res) => {
 
     const products = await Product.find()
       .skip((page - 1) * limit)
-      .limit(limit);
+      .limit(limit)
+      .populate({
+        path: 'subcategoryId',
+        select: 'name', // Select the subcategoryName field
+      });
+
+    // Map the products to include the subcategoryName
+    const productsWithSubcategoryName = products.map(product => ({
+      ...product.toObject(),
+      subcategory: product.subcategoryId.subcategoryName,
+    }));
 
     res.status(200).json({
-      products,
+      products: productsWithSubcategoryName,
       currentPage: page,
       totalPages,
     });
