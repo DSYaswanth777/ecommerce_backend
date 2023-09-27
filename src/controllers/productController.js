@@ -2,19 +2,31 @@
   const { Subcategory } = require("../models/categoryModel");
   const Product = require("../models/productModel"); 
   //**Multer for handling File Uploads */ 
-  const multer = require("multer"); 
-  //** Destination for uploaded files */
-  const upload = multer({ dest: "uploads/" }); 
+  const multer = require("multer");
   const cloudinary = require("cloudinary").v2;
+  // const cloudinaryStorage = require("multer-storage-cloudinary"); // Import multer-storage-cloudinary
+  const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
   cloudinary.config({ 
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET,
   });
+  
+  // Configure Cloudinary storage
+  const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    folder: "your-folder-name", // Set your desired folder name in Cloudinary
+    allowedFormats: ["jpg", "jpeg", "png", "gif"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
+  });
+  
+  // Configure multer to use Cloudinary storage
+  const upload = multer({ storage: storage });
+  
   //** Add Product controller */
   exports.addProduct = [
-    upload.array("productImages", 5), // Assuming a maximum of 5 images can be uploaded
+    upload.array("productImages", 5), 
     async (req, res) => {
       try {
         const {
@@ -34,10 +46,12 @@
 
         const uploadedImages = await Promise.all(
           req.files.map(async (file) => {
+            console.log("Uploaded files:", req.files);
             const result = await cloudinary.uploader.upload(file.path);
             return result.secure_url;
           })
         );
+
         
         const newProduct = await Product.create({
           productName,

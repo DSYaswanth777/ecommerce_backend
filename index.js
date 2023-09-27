@@ -20,12 +20,12 @@ const rateLimit = require("express-rate-limit");
 const app = express();
 
 //** Middleware */
-app.use(express.json());
 app.use(helmet()); // Set security headers
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
 });
+app.use(express.json());
 
 app.use(
   helmetCsp({
@@ -52,11 +52,13 @@ app.use(
   })
 );
 app.use(flash());
-app.get("/", (res) => {
+app.use(passport.initialize());
+
+app.get("/", (req, res) => {
   res.send("Hey this is my API running 🥳");
 });
+
 // Initialize Passport
-app.use(passport.initialize());
 
 // Connect to MongoDB
 connectToDatabase(); // Call the database connection function
@@ -74,6 +76,11 @@ app.use("/api/v1", couponRoutes);
 const PORT = process.env.PORT || 5173;
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something went wrong!");
 });
 // Error handling for app.listen
 server.on("error", (error) => {
