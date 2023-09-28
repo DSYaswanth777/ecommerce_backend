@@ -4,22 +4,16 @@ const User = require('../models/User');
 //**Controller to get all customers */
 exports.getCustomers = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const count = await User.countDocuments({ role: 'customer' });
-    const totalPages = Math.ceil(count / limit);
-    const customers = await User.find({ role: 'customer' })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const customers = await User.find({ role: 'customer' });
     const formattedCustomers = customers.map(customer => ({
       id: customer.id,
       name: customer.name,
       email: customer.email,
+      verfied:customer.isVerified,
+      wishlist:customer.wishlist
     }));
     res.status(200).json({
       customers: formattedCustomers,
-      currentPage: page,
-      totalPages,
     });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch customers', error: error.message });
@@ -28,7 +22,6 @@ exports.getCustomers = async (req, res) => {
 
 //**Controller to search for a customer */
 exports.searchCustomers = [
-  
   async (req, res) => {
     try {
       const { searchField, searchTerm } = req.query;

@@ -19,8 +19,8 @@ router.get(
 //**Route to search for a customer */
 router.get(
  "/admin/search-customer",
- authenticationMiddleware.isAuthenticated,
  authorizationMiddleware.isAdmin,
+ authenticationMiddleware.isAuthenticated,
  searchCustomers
 )
 module.exports = router;

@@ -18,14 +18,14 @@ const authenticationMiddleware = require("../middlewares/authenticationMiddlewar
 router.post(
   "/admin/add/product",
   addProduct,
-  authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
+  authenticationMiddleware.isAuthenticated,
 );
 //**Get all products
 router.get("/products", getAllProducts);
 //**Edit Product */
-router.put(
-  "/admin/products/:productId",
+router.patch(
+  "/admin/products/edit/:productId",
   editProduct,
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin
@@ -40,5 +40,5 @@ router.delete(
 //**Filter products based on category */
 router.get("/filterproducts", getFilteredProducts);
 //**Search for a product based on product name */
-router.get("/productsearch", searchProductsByName);
+router.get("/products/search", searchProductsByName);
 module.exports = router;

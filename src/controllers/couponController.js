@@ -7,7 +7,7 @@ exports.addCouponCode = async (req, res) => {
     const { code, discountedAmount, maxUses, expirationDate } = req.body;
     const existingCoupon = await Coupon.findOne({ code });
     if (existingCoupon) {
-      return res.status(400).json({ message: "Coupon code already exists" });
+      return res.status(400).json({ message: "Coupon code already exists" })
     }
     const newCoupon = new Coupon({
       code,
@@ -84,16 +84,25 @@ exports.editCouponCode = async (req, res) => {
       return res.status(404).json({ message: "Coupon not found" });
     }
     // Update the coupon's information
-    coupon.code = code || coupon.code; // Use existing value if not provided in the request
+    coupon.code = code || coupon.code; 
     coupon.discountedAmount = discountedAmount || coupon.discountedAmount;
     coupon.maxUses = maxUses || coupon.maxUses;
     coupon.expirationDate = expirationDate || coupon.expirationDate;
     await coupon.save();
-    res.status(200).json({ message: "Coupon updated successfully" });
+    res.status(200).json({ message: "Coupon updated successfully" },);
   } catch (error) {
     console.error("Error updating coupon:", error);
     res
       .status(500)
       .json({ message: "An error occurred while updating the coupon" });
+  }
+};
+exports.getAllCoupons = async (req, res) => {
+  try {
+    const coupons = await Coupon.find();
+    res.status(200).json(coupons);
+  } catch (error) {
+    console.error("Error fetching coupons:", error);
+    res.status(500).json({ message: "An error occurred while fetching coupons" });
   }
 };

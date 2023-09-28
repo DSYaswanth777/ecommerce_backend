@@ -1,5 +1,5 @@
 //**Mongoose Import */
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 //**Coupon Code Schema */
 const couponSchema = new mongoose.Schema({
   code: {
@@ -14,10 +14,13 @@ const couponSchema = new mongoose.Schema({
   maxUses: {
     type: Number, 
     default: null, 
+    required: true,
+
   },
   expirationDate: {
     type: Date, 
     default: null,
+    required: true,
   },
 });
 

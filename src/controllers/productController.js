@@ -4,7 +4,6 @@
   //**Multer for handling File Uploads */ 
   const multer = require("multer");
   const cloudinary = require("cloudinary").v2;
-  // const cloudinaryStorage = require("multer-storage-cloudinary"); // Import multer-storage-cloudinary
   const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
   cloudinary.config({ 
@@ -22,10 +21,10 @@
   });
   
   // Configure multer to use Cloudinary storage
-  const upload = multer({ storage: storage });
+const upload = multer({ storage: storage });
   
   //** Add Product controller */
-  exports.addProduct = [
+exports.addProduct = [
     upload.array("productImages", 5), 
     async (req, res) => {
       try {
@@ -46,13 +45,13 @@
 
         const uploadedImages = await Promise.all(
           req.files.map(async (file) => {
-            console.log("Uploaded files:", req.files);
             const result = await cloudinary.uploader.upload(file.path);
             return result.secure_url;
           })
         );
 
-        
+
+
         const newProduct = await Product.create({
           productName,
           productPrice,
@@ -72,97 +71,65 @@
     },
   ];
   //**  Get all products controller
-  exports.getAllProducts = async (req, res) => {
-    try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
-
-      const count = await Product.countDocuments();
-      const totalPages = Math.ceil(count / limit);
-
-      const products = await Product.find()
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .populate({
-          path: 'subcategoryId',
-          select: 'name', // Select the subcategoryName field
-        });
-
-      // Map the products to include the subcategoryName
-      const productsWithSubcategoryName = products.map(product => ({
-        ...product.toObject(),
-        subcategory: product.subcategoryId.subcategoryName,
-      }));
-
-      res.status(200).json({
-        products: productsWithSubcategoryName,
-        currentPage: page,
-        totalPages,
+// Get all products controller
+exports.getAllProducts = async (req, res) => {
+  try {
+    const products = await Product.find()
+      .populate({
+        path: 'subcategoryId',
+        select: 'name', // Select the subcategoryName field
       });
+
+    // Map the products to include the subcategoryName
+    const productsWithSubcategoryName = products.map(product => ({
+      ...product.toObject(),
+      subcategory: product.subcategoryId.subcategoryName,
+    }));
+
+    res.status(200).json(productsWithSubcategoryName);
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching products" });
+  }
+};
+// **Edit Product controller**
+exports.editProduct = [
+  async (req, res) => {
+    try {
+      const { productId } = req.params;
+
+      // Fetch the product from the database
+      const product = await Product.findById(productId)
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      // Update the product with the new values from the request body
+      product.productName = req.body.productName;
+      product.productPrice = req.body.productPrice;
+      product.productInfo = req.body.productInfo;
+      product.subcategoryId = req.body.subcategoryId;
+      product.productStock = req.body.productStock;
+
+      // Save the updated product to the database
+      await product.save();
+
+      // Send the updated product back to the client
+      res.status(200).json(product);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error editing product:", error);
       res
         .status(500)
-        .json({ message: "An error occurred while fetching products" });
+        .json({ message: "An error occurred while editing the product" });
     }
-  };
-  //**  Edit Product controller
-  exports.editProduct = [
-    async (req, res) => {
-      try {
-        const productId = req.params.productId;
-        const updatedFields = req.body;
-        // You can check if the product exists in the database
-        const existingProduct = await Product.findById(productId);
-        if (!existingProduct) {
-          return res.status(404).json({ message: "Product not found" });
-        }
-        // Delete existing images from Cloudinary
-        for (const imageUrl of existingProduct.productImages) {
-          const public_id = imageUrl.split('/').pop().split('.')[0];
-          await cloudinary.uploader.destroy(public_id);
-        }
+  },
+];
 
-        // Upload and replace with new images in Cloudinary
-        const uploadedImages = await Promise.all(
-          req.files.map(async (file) => {
-            const result = await cloudinary.uploader.upload(file.path);
-            return result.secure_url;
-          })
-        );
-
-        // Update the product details
-        for (const [key, value] of Object.entries(updatedFields)) {
-          existingProduct[key] = value;
-        }
-
-        // Update productImages with new Cloudinary URLs
-        existingProduct.productImages = uploadedImages;
-
-        // Calculate updated productPrice if applicable
-        if (
-          updatedFields.productMRP !== undefined ||
-          updatedFields.productDiscount !== undefined
-        ) {
-          existingProduct.productPrice =
-            (updatedFields.productMRP || existingProduct.productMRP) -
-            (updatedFields.productDiscount || existingProduct.productDiscount);
-        }
-
-        // Save the updated product
-        const updatedProduct = await existingProduct.save();
-
-        res.status(200).json(updatedProduct);
-      } catch (error) {
-        console.error("Error editing product:", error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while editing the product" });
-      }
-    },
-  ];
-  //**  Delete Product controller
-  exports.deleteProduct = [
+//**  Delete Product controller
+exports.deleteProduct = [
     async (req, res) => {
       try {
         const productId = req.params.productId;
@@ -194,9 +161,9 @@
           .json({ message: "An error occurred while deleting the product" });
       }
     },
-  ];
-  //** Filter based on category
-  exports.getFilteredProducts = async (req, res) => {
+];
+//** Filter based on category
+exports.getFilteredProducts = async (req, res) => {
     try {
       const { categoryId, subcategoryId } = req.query;
 
@@ -218,9 +185,9 @@
         .status(500)
         .json({ message: "An error occurred while fetching filtered products" });
     }
-  };
+};
   //**Search product based on name */
-  exports.searchProductsByName = async (req, res) => {
+exports.searchProductsByName = async (req, res) => {
     try {
       const { productName } = req.query;
 
@@ -236,4 +203,4 @@
         .status(500)
         .json({ message: "An error occurred while searching products by name" });
     }
-  };
+};
