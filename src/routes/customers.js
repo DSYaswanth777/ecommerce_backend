@@ -18,7 +18,7 @@ router.get(
 );
 //**Route to search for a customer */
 router.get(
- "/admin/search-customer",
+ "/admin/search/customer",
  authorizationMiddleware.isAdmin,
  authenticationMiddleware.isAuthenticated,
  searchCustomers

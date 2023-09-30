@@ -8,6 +8,7 @@ exports.getCustomers = async (req, res) => {
     const formattedCustomers = customers.map(customer => ({
       id: customer.id,
       name: customer.name,
+      mobile:customer.mobile,
       email: customer.email,
       verfied:customer.isVerified,
       wishlist:customer.wishlist
@@ -19,7 +20,6 @@ exports.getCustomers = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch customers', error: error.message });
   }
 };
-
 //**Controller to search for a customer */
 exports.searchCustomers = [
   async (req, res) => {

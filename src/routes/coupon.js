@@ -8,6 +8,7 @@ const {
   deleteCouponCode,
   editCouponCode,
   getAllCoupons,
+  searchCoupons,
 } = require("../controllers/couponController");
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
@@ -32,7 +33,7 @@ router.patch(
     authorizationMiddleware.isAdmin,
     editCouponCode
 )
-//**Route to Delete Coupon */
+//**Route to Delete Coupon * /
 router.delete(
   "/admin/delete/coupon/:couponId",
   authenticationMiddleware.isAuthenticated,
@@ -44,6 +45,12 @@ router.get(
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   getAllCoupons
+)
+router.get(
+  "/admin/coupons/search",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  searchCoupons
 )
 
 module.exports = router;

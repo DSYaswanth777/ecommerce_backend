@@ -106,3 +106,17 @@ exports.getAllCoupons = async (req, res) => {
     res.status(500).json({ message: "An error occurred while fetching coupons" });
   }
 };
+exports.searchCoupons = async (req, res) => {
+  try {
+    const { couponCode } = req.query;
+    
+    // Search for coupons that match the provided code
+    const coupons = await Coupon.find({ code: { $regex: couponCode, $options: "i" } });
+    
+    res.status(200).json(coupons);
+  } catch (error) {
+    console.error("Error searching for coupons:", error);
+    res.status(500).json({ message: "An error occurred while searching for coupons" });
+  }
+};
+

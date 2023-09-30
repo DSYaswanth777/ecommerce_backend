@@ -10,6 +10,8 @@ const {
   deleteCategory,
   deleteSubCategory,
   searchCategories,
+  editCategory,
+  editSubCategory,
 } = require("../controllers/categoriesController");
 //**Importing Middleware */
 const authorizationMiddleware = require("../middlewares/authorizationMiddleware");
@@ -23,6 +25,18 @@ router.post(
   authorizationMiddleware.isAdmin,
   addCategory
 );
+router.put(
+  "/admin/edit/category/:categoryId",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  editCategory
+)
+router.put(
+  "/admin/edit/category/:categoryId/subcategory/:subcategoryId",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  editSubCategory
+)
 //**Route to add a SubCategory */
 router.post(
   "/admin/add/categories/:categoryId/subcategory",
@@ -45,6 +59,6 @@ router.delete(
   deleteSubCategory
 );
 //**Route to search a category */
-router.get("/categories/search", searchCategories);
+router.get("/categories/search", searchCategories)
 
 module.exports = router;
