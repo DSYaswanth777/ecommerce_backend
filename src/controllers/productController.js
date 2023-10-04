@@ -186,6 +186,37 @@ exports.getFilteredProducts = async (req, res) => {
         .json({ message: "An error occurred while fetching filtered products" });
     }
 };
+// Get products starting from the date of the last added product
+exports.getRecentProducts = async (req, res) => {
+  try {
+    // Find the date of the last added product
+    const lastAddedProduct = await Product.findOne().sort({ createdAt: -1 });
+
+    if (!lastAddedProduct) {
+      return res.status(404).json({ message: "No products found" });
+    }
+
+    // Calculate the start date based on the last added product's date
+    const startDate = new Date(lastAddedProduct.createdAt);
+
+    // Calculate the end date by subtracting 1 day from the start date
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() - 1);
+
+    // Find products within the date range
+    const recentProducts = await Product.find({
+      createdAt: { $gte: endDate, $lte: startDate },
+    });
+
+    res.status(200).json(recentProducts);
+  } catch (error) {
+    console.error("Error fetching recent products:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching recent products",
+    });
+  }
+};
+
   //**Search product based on name */
 exports.searchProductsByName = async (req, res) => {
     try {

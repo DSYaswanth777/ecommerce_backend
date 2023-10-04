@@ -9,10 +9,13 @@ const productSchema = new mongoose.Schema({
   productStock:{type:Number,required:true, min:1, max:350},
   subcategoryId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Subcategory", // Reference to your Subcategory model
+    ref: "Subcategory",
     required: true,
   },
-  
+  createdAt: {
+    type: Date,
+    default: Date.now, 
+  },
 
 });
 
