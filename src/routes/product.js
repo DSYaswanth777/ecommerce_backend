@@ -6,8 +6,11 @@ const {
   getAllProducts,
   editProduct,
   deleteProduct,
-  getFilteredProducts,
   searchProductsByName,
+  viewProduct,
+  getRecentProducts,
+  sortProducts,
+  getProductsByCategoryAndSubcategory,
 } = require("../controllers/productController");
 //**Router Initilaztion */
 const router = express.Router();
@@ -19,7 +22,7 @@ router.post(
   "/admin/add/product",
   addProduct,
   authorizationMiddleware.isAdmin,
-  authenticationMiddleware.isAuthenticated,
+  authenticationMiddleware.isAuthenticated
 );
 //**Get all products
 router.get("/products", getAllProducts);
@@ -38,7 +41,12 @@ router.delete(
   authorizationMiddleware.isAdmin
 );
 //**Filter products based on category */
-router.get("/filterproducts", getFilteredProducts);
+router.get("/products/sort", sortProducts);
 //**Search for a product based on product name */
 router.get("/products/search", searchProductsByName);
+router.get("/products/recentproducts",getRecentProducts)
+//**View Product API */
+router.get("/products/viewproduct/:productId", viewProduct);
+router.get('/products/filters',getProductsByCategoryAndSubcategory);
+
 module.exports = router;

@@ -14,31 +14,27 @@ const {
 const authenticationMiddleware = require("../middlewares/authenticationMiddleware");
 //** Add a product to the cart */
 router.post(
-  "/user/:userId/cart/add",
+  "/user/cart/add",
   authenticationMiddleware.isAuthenticated,
   addProductToCart
 );
 //** Get user's cart */
-router.get(
-  "/user/:userId/cart",
-  authenticationMiddleware.isAuthenticated,
-  getUserCart
-);
+router.get("/user/cart", authenticationMiddleware.isAuthenticated, getUserCart);
 //** Increase cart item quantity */
 router.put(
-  "/user/:userId/cart/increase/:cartItemId",
+  "/user/cart/increase",
   authenticationMiddleware.isAuthenticated,
   increaseCartItemQuantity
 );
 //**Decrease cart item quantity */
 router.put(
-  "/user/:userId/cart/decrease/:cartItemId",
+  "/user/cart/decrease",
   authenticationMiddleware.isAuthenticated,
   decreaseCartItemQuantity
 );
 //**Remove from cart
 router.delete(
-  "/user/:userId/cart/:cartItemId/remove",
+  "/user/cart/remove",
   authenticationMiddleware.isAuthenticated,
   removeProductFromCart
 );

@@ -22,9 +22,9 @@ router.post(
   authenticationMiddleware.isAuthenticated,
   addProductToWishlist
 );
-//**Route to remove a product to wishlist */
+//**Route to remove a product to wishlist *
 router.delete(
-  "/wishlist/delete/:wishlistItemId",
+  "/wishlist/delete",
   authenticationMiddleware.isAuthenticated,
   removeProductFromWishlist
 );
