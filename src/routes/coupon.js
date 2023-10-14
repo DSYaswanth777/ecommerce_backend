@@ -40,12 +40,15 @@ router.delete(
   authorizationMiddleware.isAdmin,
   deleteCouponCode
 );
+//**Route to Get Coupon * /
+
 router.get(
   "/admin/coupons",
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   getAllCoupons
 )
+//**Route to Search Coupon * /
 router.get(
   "/admin/coupons/search",
   authenticationMiddleware.isAuthenticated,

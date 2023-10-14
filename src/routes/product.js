@@ -11,6 +11,7 @@ const {
   getRecentProducts,
   sortProducts,
   getProductsByCategoryAndSubcategory,
+  getProductsBySubcategories,
 } = require("../controllers/productController");
 //**Router Initilaztion */
 const router = express.Router();
@@ -44,9 +45,8 @@ router.delete(
 router.get("/products/sort", sortProducts);
 //**Search for a product based on product name */
 router.get("/products/search", searchProductsByName);
-router.get("/products/recentproducts",getRecentProducts)
+router.get("/products/recentproducts", getRecentProducts);
 //**View Product API */
 router.get("/products/viewproduct/:productId", viewProduct);
-router.get('/products/filters',getProductsByCategoryAndSubcategory);
-
+router.get("/products/filters", getProductsBySubcategories)
 module.exports = router;

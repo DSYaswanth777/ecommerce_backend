@@ -3,8 +3,8 @@ const { Subcategory, Category } = require("../models/categoryModel");
 const Product = require("../models/productModel");
 //**Multer for handling File Uploads */
 const multer = require("multer");
-const cloudinary = require("cloudinary").v2
-const { CloudinaryStorage } = require("multer-storage-cloudinary")
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -164,6 +164,8 @@ exports.sortProducts = async (req, res) => {
       sort = { productPrice: 1 };
     } else if (sortBy === "hightolow") {
       sort = { productPrice: -1 };
+    } else if (sortBy === "featured") {
+      sort = { createdAt: -1 }
     }
     const products = await Product.find()
       .sort(sort)
@@ -256,29 +258,30 @@ exports.viewProduct = async (req, res) => {
       .json({ message: "An error occurred while fetching the product" });
   }
 };
-// Create a new controller function to fetch products by categoryId and subcategoryId
-exports.getProductsByCategoryAndSubcategory = async (req, res) => {
+exports.getProductsBySubcategories = async (req, res) => {
   try {
-    const { categoryIds, subcategoryIds } = req.query;
-    let query = {};
-    if (categoryIds) {
-      const categoryIdsArray = categoryIds.split(",");
-      query.categoryId = { $in: categoryIdsArray };
-    }
+    // Get the subcategory IDs from the query parameters as a comma-separated string
+    const subcategoryIds = req.query.subcategoryIds;
 
-    if (subcategoryIds) {
-      const subcategoryIdsArray = subcategoryIds.split(",");
-      query.subcategoryId = { $in: subcategoryIdsArray };
-    }
-    const products = await Product.find(query)
+    // Split the comma-separated string into an array
+    const subcategoryIdArray = subcategoryIds.split(',');
+
+    // Fetch products that belong to the specified subcategories
+    const products = await Product.find({
+      subcategoryId: { $in: subcategoryIdArray },
+    })
       .populate("categoryId", "name")
       .populate("subcategoryId", "name");
 
     res.status(200).json(products);
   } catch (error) {
-    console.error("Error fetching products:", error);
-    res.status(500).json({
-      message: "An error occurred while fetching products",
-    });
+    console.error("Error fetching products by subcategories:", error);
+    res
+      .status(500)
+      .json({
+        message: "An error occurred while fetching products by subcategories",
+      });
   }
 };
+
+
