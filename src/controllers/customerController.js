@@ -11,7 +11,6 @@ exports.getCustomers = async (req, res) => {
       mobile:customer.mobile,
       email: customer.email,
       verfied:customer.isVerified,
-      wishlist:customer.wishlist
     }));
     res.status(200).json({
       customers: formattedCustomers,

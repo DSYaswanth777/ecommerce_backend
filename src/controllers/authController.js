@@ -17,8 +17,7 @@ exports.signup = async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  const { name, mobile, email, password, confirmPassword } =
-    req.body;
+  const { name, mobile, email, password, confirmPassword } = req.body;
   // Check if passwords match
   if (password !== confirmPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
@@ -55,7 +54,7 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       otp,
       role: "customer",
-      otpRegenerationCount: 1, 
+      otpRegenerationCount: 1,
       isVerified: false,
     });
     await newUser.save();
@@ -88,7 +87,9 @@ exports.verifyOTP = async (req, res) => {
       // Send welcome email to the user
       sendWelcomeEmail(user.email, user.name);
 
-      return res.status(200).json({ message: "OTP verified successfully! You Can Login Now" });
+      return res
+        .status(200)
+        .json({ message: "OTP verified successfully! You Can Login Now" });
     } else {
       // Invalid OTP
       return res.status(400).json({ message: "Invalid OTP" });
@@ -113,16 +114,20 @@ exports.login = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Incorrect username" });
     }
-    
+
     if (!user.isVerified) {
-      return res.status(401).json({ message: "Account not verified. Please verify your account first." });
+      return res
+        .status(401)
+        .json({
+          message: "Account not verified. Please verify your account first.",
+        });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Incorrect password" });
     }
-    
+
     const token = generateToken(user);
 
     // Send welcome email to the user
@@ -155,18 +160,28 @@ exports.profileUpdate = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    const originalName = user.name;
-    const originalEmail = user.email;
-    user.name = name;
-    user.email = email;
+
+    // Check if the user wants to update their name
+    if (name) {
+      user.name = name;
+    }
+
+    // Check if the user wants to update their email
+    if (email) {
+      user.email = email;
+    }
+
     await user.save();
     let message = "";
-    if (name !== originalName) {
-      message += "You have updated your name. ";
+
+    if (name && email) {
+      message = "You have updated your name and email.";
+    } else if (name) {
+      message = "You have updated your name.";
+    } else if (email) {
+      message = "You have updated your email.";
     }
-    if (email !== originalEmail) {
-      message += "You have updated your email. ";
-    }
+
     return res.status(200).json({ message: message || "No changes made" });
   } catch (error) {
     return res
@@ -174,6 +189,7 @@ exports.profileUpdate = async (req, res) => {
       .json({ message: "Failed to update profile", error: error.message });
   }
 };
+
 //**Controller For Change Password */
 exports.changePassword = async (req, res) => {
   const userId = req.user.id;
@@ -261,7 +277,7 @@ exports.getUserProfile = async (req, res) => {
   const userId = req.user.id;
   try {
     const user = await User.findById(userId);
-    console.log(user)
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -271,9 +287,6 @@ exports.getUserProfile = async (req, res) => {
       name: user.name,
       mobile: user.mobile,
       email: user.email,
-      wishlist:user.wishlist,
-      cart:user.cart,
-      coupon:user.appliedCoupon
     });
   } catch (error) {
     return res
