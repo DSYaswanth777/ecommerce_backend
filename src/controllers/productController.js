@@ -158,7 +158,8 @@ exports.deleteProduct = [
 //** Filter based on category
 exports.sortProducts = async (req, res) => {
   try {
-    const { sortBy } = req.query;
+    const { sortBy, minPrice, maxPrice } = req.query;
+
     let sort = {};
     if (sortBy === "lowtohigh") {
       sort = { productPrice: 1 };
@@ -167,7 +168,22 @@ exports.sortProducts = async (req, res) => {
     } else if (sortBy === "featured") {
       sort = { createdAt: -1 }
     }
-    const products = await Product.find()
+
+    const priceFilter = {};
+
+    if (minPrice) {
+      priceFilter.productPrice = { $gte: parseFloat(minPrice) };
+    }
+
+    if (maxPrice) {
+      priceFilter.productPrice = { ...priceFilter.productPrice, $lte: parseFloat(maxPrice) };
+    }
+
+    // Combine the sorting and price filter criteria
+    const filterCriteria = {
+      ...priceFilter,
+    };
+    const products = await Product.find(filterCriteria)
       .sort(sort)
       .populate("categoryId", "name")
       .populate("subcategoryId", "name");
