@@ -13,6 +13,7 @@ const productRoutes = require("./src/routes/product");
 const cartRoutes = require("./src/routes/cart");
 const wishlistRoutes = require("./src/routes/wishlist");
 const couponRoutes = require("./src/routes/coupon");
+const orderRoutes = require("./src/routes/order")
 const helmet = require("helmet");
 dotenv.config();
 const helmetCsp = require("helmet-csp");
@@ -71,7 +72,7 @@ app.use("/api/v1", productRoutes);
 app.use("/api/v1", cartRoutes);
 app.use("/api/v1", wishlistRoutes);
 app.use("/api/v1", couponRoutes);
-
+app.use("/api/v1",orderRoutes)
 // Start the server
 const PORT = process.env.PORT || 5173;
 const server = app.listen(PORT, () => {

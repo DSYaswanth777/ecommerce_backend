@@ -1,6 +1,6 @@
 //**Mongoose import */
 const mongoose = require("mongoose");
-mongoose.set('strictQuery', false);
+mongoose.set("strictQuery", false);
 
 //**Importing Validators */
 const { nameValidator } = require("../utilities/validators");
@@ -58,6 +58,12 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 1, // Default quantity when adding to cart
       },
+    },
+  ],
+  orders: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
     },
   ],
   wishlist: [
