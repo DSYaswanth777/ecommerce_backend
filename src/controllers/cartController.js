@@ -108,7 +108,7 @@ exports.getUserCart = async (req, res) => {
     const userId = req.user.id;
     const user = await User.findById(userId).populate("cart.product");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" })
     }
 
     let totalFee = 0;
