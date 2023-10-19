@@ -131,7 +131,7 @@ exports.getUserCart = async (req, res) => {
 
     totalFee += deliveryCharge;
 
-    res.status(200).json({ cartItems: user.cart, totalFee });
+    res.status(200).json({ cartItems: user.cart, totalFee,deliveryCharge });
   } catch (error) {
     console.error("Error fetching user's cart:", error);
     res

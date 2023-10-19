@@ -1,6 +1,6 @@
 // models/Order.js
 
-const mongoose = require("mongoose") 
+const mongoose = require("mongoose");
 
 const OrderSchema = new mongoose.Schema({
   user: {
@@ -28,7 +28,7 @@ const OrderSchema = new mongoose.Schema({
     landmark: String,
     townCity: String,
     pincode: String,
-  
+    state: String,
   },
   paymentStatus: {
     type: String,
@@ -43,7 +43,7 @@ const OrderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // Set a default value to the current date and time
   },
-  orderID: String
+  orderID: String,
 });
 
-module.exports = mongoose.model("Order", OrderSchema)
+module.exports = mongoose.model("Order", OrderSchema);
