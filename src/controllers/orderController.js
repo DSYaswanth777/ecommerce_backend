@@ -33,7 +33,7 @@ exports.placeOrder = async (req, res) => {
 
     let totalAmount = 0;
     user.cart.forEach((cartItem) => {
-      const product = cartItem.product
+      const product = cartItem.product;
       if (product) {
         totalAmount += product.productPrice * cartItem.quantity;
       }
@@ -41,14 +41,19 @@ exports.placeOrder = async (req, res) => {
     // Generate a unique order ID
     const orderID = generateOrderID();
 
+    // Get the current date and time
+    const orderDate = new Date();
+
     const order = new orderModel({
       user: userId,
       cartItems: user.cart,
-      shippingAddress:shippingAddress,
+      shippingAddress: shippingAddress,
       totalAmount,
       paymentStatus: "pending",
       orderID: orderID,
+      orderDate: orderDate,
     });
+
     await order.save();
 
     // Add the order to the user's orders array
@@ -135,7 +140,6 @@ exports.getAllUserOrders = async (req, res) => {
           select: "name", // Adjust the field name as per your subcategory model
         },
       },
-      
     });
 
     if (!user) {
@@ -152,18 +156,21 @@ exports.getAllUserOrders = async (req, res) => {
       .json({ message: "An error occurred while fetching user orders" });
   }
 };
-
 exports.getAllOrdersForAdmin = async (req, res) => {
   try {
     const orders = await orderModel
-      .find()  // No exclusion of the 'user' field
+      .find() // No exclusion of the 'user' field
       .populate({
         path: "cartItems.product",
         select: "productName subcategoryId",
         populate: {
           path: "subcategoryId",
           select: "name",
-        }
+        },
+      })
+      .populate({
+        path: "user",
+        select: "shippingAddress",
       });
 
     res.status(200).json({ orders });
@@ -174,4 +181,29 @@ exports.getAllOrdersForAdmin = async (req, res) => {
     });
   }
 };
+exports.getOrderDetails = async (req, res) => {
+  try {
+    const { orderID } = req.params; // Get the orderID from the URL parameter
 
+    // Find the order based on the orderID
+    const order = await orderModel.findOne({ orderID }).populate({
+      path: "cartItems.product",
+      select: "productName subcategoryId",
+      populate: {
+        path: "subcategoryId",
+        select: "name",
+      },
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.status(200).json({ order });
+  } catch (error) {
+    console.error("Error fetching order details:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching order details" });
+  }
+};

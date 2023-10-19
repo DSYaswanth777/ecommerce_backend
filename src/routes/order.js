@@ -7,6 +7,7 @@ const {
   updateOrder,
   getAllUserOrders,
   getAllOrdersForAdmin,
+  getOrderDetails,
 } = require("../controllers/orderController");
 
 router.post(
@@ -23,6 +24,11 @@ router.get(
   "/user/orders",
   authenticationMiddleware.isAuthenticated,
   getAllUserOrders
+);
+router.get(
+  "/user/orders/orderdetail/:orderID",
+  authenticationMiddleware.isAuthenticated,
+  getOrderDetails
 );
 router.get(
   "/admin/orders",
