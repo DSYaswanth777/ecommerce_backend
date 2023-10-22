@@ -3,7 +3,9 @@
 const User = require("../models/User");
 const orderModel = require("../models/orderModel");
 const Product = require("../models/productModel");
+const path = require("path");
 
+const PDFDocument = require("pdfkit");
 function generateOrderID() {
   const currentDate = new Date();
   const formattedDate = currentDate
@@ -30,20 +32,17 @@ exports.placeOrder = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
     let totalAmount = 0;
     user.cart.forEach((cartItem) => {
       const product = cartItem.product;
       if (product) {
-        totalAmount += product.productPrice * cartItem.quantity;
+        totalAmount += product.productPrice * cartItem.quantity + 50;
       }
     });
-    // Generate a unique order ID
     const orderID = generateOrderID();
 
     // Get the current date and time
     const orderDate = new Date();
-
     const order = new orderModel({
       user: userId,
       cartItems: user.cart,
@@ -134,7 +133,7 @@ exports.getAllUserOrders = async (req, res) => {
       path: "orders",
       populate: {
         path: "cartItems.product",
-        select: "productName subcategoryId", // Add other product fields you need
+        select: "productName productPrice productImages subcategoryId ", // Add other product fields you need
         populate: {
           path: "subcategoryId", // Assuming it's the name of the subcategory reference in your product model
           select: "name", // Adjust the field name as per your subcategory model
@@ -162,7 +161,7 @@ exports.getAllOrdersForAdmin = async (req, res) => {
       .find() // No exclusion of the 'user' field
       .populate({
         path: "cartItems.product",
-        select: "productName subcategoryId",
+        select: "productName productPrice productImages subcategoryId ",
         populate: {
           path: "subcategoryId",
           select: "name",
@@ -188,7 +187,7 @@ exports.getOrderDetails = async (req, res) => {
     // Find the order based on the orderID
     const order = await orderModel.findOne({ orderID }).populate({
       path: "cartItems.product",
-      select: "productName subcategoryId",
+      select: "productName productPrice productImages subcategoryId ",
       populate: {
         path: "subcategoryId",
         select: "name",
@@ -205,5 +204,204 @@ exports.getOrderDetails = async (req, res) => {
     res
       .status(500)
       .json({ message: "An error occurred while fetching order details" });
+  }
+};
+exports.shippingAddress = async (req, res) => {
+  {
+    try {
+      const { orderID } = req.params;
+      const order = await orderModel.findOne({ orderID }).populate({
+        path: "cartItems.product",
+        select: "productName subcategoryId productPrice", // Include the fields you need
+        populate: {
+          path: "subcategoryId",
+          select: "name",
+        },
+      });
+
+      if (!order || order.paymentStatus !== "Successful") {
+        return res
+          .status(404)
+          .json({ message: "Order not found or not successful" });
+      }
+
+      const user = await orderModel.findOne({ orderID });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Create a PDF document
+      const pdfDoc = new PDFDocument();
+
+      // Set response headers
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `inline; filename="order-${orderID}.pdf`
+      );
+
+      // Pipe the PDF document to the response
+      pdfDoc.pipe(res);
+      pdfDoc.dash(5, { space: 2 }); // Adjust the numbers for your preferred dot size and space
+
+      // Add a rectangle as a border around the content
+      pdfDoc.rect(40, 25, 520, 350).stroke(); // Adjust the coordinates and dimensions as needed
+
+      // Reset the dash setting to the default
+      pdfDoc.undash();
+      const pageWidth = pdfDoc.page.width;
+
+      // Calculate the X-coordinate to position the image at the right end
+      const imageWidth = 160; // Adjust as needed
+      const xCoordinate = pageWidth - imageWidth - 65; // 60 is for some margin
+
+      // Add the PNG image to the PDF at the right end
+      const imagePath = path.join(__dirname, "brand_logo.png"); // Path to your PNG image
+      pdfDoc.image(imagePath, xCoordinate, 19, {
+        width: imageWidth,
+        height: 80,
+      });
+
+      // Sender's Information
+      pdfDoc.moveDown(0.5);
+      pdfDoc.moveDown(0.5);
+      pdfDoc.moveDown(0.5);
+      pdfDoc.font("Helvetica");
+      pdfDoc
+        .fontSize(15)
+        .text("From:", { continued: false })
+        .font("Helvetica-Bold");
+      pdfDoc.text("GSR Handlooms", { continued: false }).font("Helvetica");
+      pdfDoc.text(
+        "Address: Jakka Vari Street, Perala, Chirala, Andhra Pradesh"
+      );
+      pdfDoc.text("Pincode: 523157");
+      pdfDoc.moveDown(0.8);
+      pdfDoc.moveDown(0.5);
+      pdfDoc.font("Helvetica");
+      pdfDoc.fontSize(15).text(`To:`);
+      pdfDoc.fontSize(14).text(`Order ID: ${orderID}`).font("Helvetica-Bold");
+      pdfDoc.fontSize(14).text(`Order Date: ${order.orderDate}`);
+      pdfDoc.moveDown(0.5);
+      pdfDoc.moveDown(0.5);
+      pdfDoc.fontSize(16).text("ADDRESS:").font("Helvetica-Bold");
+      pdfDoc
+        .fontSize(14)
+        .text(`Name: ${user.shippingAddress.fullName}`)
+        .font("Helvetica");
+      pdfDoc
+        .fontSize(14)
+        .text(`Address: ${user.shippingAddress.streetAddress}`)
+        .font("Helvetica");
+      pdfDoc
+        .fontSize(14)
+        .text(`City: ${user.shippingAddress.townCity}`)
+        .font("Helvetica");
+      pdfDoc
+        .fontSize(14)
+        .text(`State: ${user.shippingAddress.state}`)
+        .font("Helvetica");
+      pdfDoc
+        .fontSize(14)
+        .text(`PIN Code: ${user.shippingAddress.pincode}`)
+        .font("Helvetica");
+      pdfDoc.end();
+
+      res.status(200);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res
+        .status(500)
+        .json({ message: "An error occurred while generating the PDF" });
+    }
+  }
+};
+
+exports.getOrdersByDate = async (req, res) => {
+  try {
+    const { orderDate } = req.query;
+
+    if (!orderDate) {
+      return res
+        .status(400)
+        .json({ message: "Order date parameter is required" });
+    }
+
+    // Parse the orderDate as a Date object
+    const date = new Date(orderDate);
+    // Create a date range for the entire day
+    date.setHours(0, 0, 0, 0);
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
+
+    // Define a filter based on the order date
+    const filter = {
+      orderDate: {
+        $gte: date,
+        $lt: nextDay,
+      },
+    };
+
+    // Query the orders using the filter
+    const orders = await orderModel
+      .find(filter)
+      .populate({
+        path: "cartItems.product",
+        select: "productName productImages subcategoryId ",
+        populate: {
+          path: "subcategoryId",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "user",
+        select: "shippingAddress",
+      });
+
+    res.status(200).json({ orders });
+  } catch (error) {
+    console.error("Error fetching orders by date:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching orders by date",
+    });
+  }
+};
+exports.getOrdersByID = async (req, res) => {
+  try {
+    const { orderID } = req.query;
+
+    if (!orderID) {
+      return res
+        .status(400)
+        .json({ message: "Order ID parameter is required" });
+    }
+
+    // Define a filter based on the order ID
+    const filter = {
+      orderID: orderID,
+    };
+
+    // Query the orders using the filter
+    const orders = await orderModel
+      .find(filter)
+      .populate({
+        path: "cartItems.product",
+        select: "productName subcategoryId",
+        populate: {
+          path: "subcategoryId",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "user",
+        select: "shippingAddress",
+      });
+
+    res.status(200).json({ orders });
+  } catch (error) {
+    console.error("Error fetching orders by ID:", error);
+    res.status(500).json({
+      message: "An error occurred while fetching orders by ID",
+    });
   }
 };
