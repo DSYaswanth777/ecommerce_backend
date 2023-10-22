@@ -1,7 +1,7 @@
 // controllers/orderController.js
 
 const User = require("../models/User");
-const orderModel = require("../models/orderModel");
+const orderModel = require("../models/orderModel")
 const Product = require("../models/productModel");
 const path = require("path");
 
@@ -28,9 +28,9 @@ exports.placeOrder = async (req, res) => {
     const userId = req.user.id;
     const { shippingAddress } = req.body;
 
-    const user = await User.findById(userId).populate("cart.product");
+    const user = await User.findById(userId).populate("cart.product")
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" })
     }
     let totalAmount = 0;
     user.cart.forEach((cartItem) => {
@@ -131,6 +131,7 @@ exports.getAllUserOrders = async (req, res) => {
     const userId = req.user.id;
     const user = await User.findById(userId).populate({
       path: "orders",
+      options: { sort: { orderDate: -1 } }, 
       populate: {
         path: "cartItems.product",
         select: "productName productPrice productImages subcategoryId ", // Add other product fields you need
@@ -170,7 +171,8 @@ exports.getAllOrdersForAdmin = async (req, res) => {
       .populate({
         path: "user",
         select: "shippingAddress",
-      });
+      })
+      
 
     res.status(200).json({ orders });
   } catch (error) {
@@ -187,6 +189,7 @@ exports.getOrderDetails = async (req, res) => {
     // Find the order based on the orderID
     const order = await orderModel.findOne({ orderID }).populate({
       path: "cartItems.product",
+      options: { sort: { orderDate: -1 } },
       select: "productName productPrice productImages subcategoryId ",
       populate: {
         path: "subcategoryId",
