@@ -153,13 +153,13 @@ exports.getAllUserOrders = async (req, res) => {
     console.error("Error fetching user orders:", error);
     res
       .status(500)
-      .json({ message: "An error occurred while fetching user orders" });
+      .json({ message: "An error occurred while fetching user orders" })
   }
 };
 exports.getAllOrdersForAdmin = async (req, res) => {
   try {
     const orders = await orderModel
-      .find() // No exclusion of the 'user' field
+      .find()
       .populate({
         path: "cartItems.product",
         select: "productName productPrice productImages subcategoryId ",
@@ -189,7 +189,6 @@ exports.getOrderDetails = async (req, res) => {
     // Find the order based on the orderID
     const order = await orderModel.findOne({ orderID }).populate({
       path: "cartItems.product",
-      options: { sort: { orderDate: -1 } },
       select: "productName productPrice productImages subcategoryId ",
       populate: {
         path: "subcategoryId",

@@ -23,7 +23,7 @@ exports.addProductToWishlist = async (req, res) => {
 
     if (!existingWishlistItem) {
       // Remove the product from the cart if it exists there
-      const cartItem = user.cart.find((item) => item.product.equals(productId));
+      const cartItem = user.cart.find((item) => item.product.equals(productId))
       if (cartItem) {
         user.cart.pull(cartItem._id);
       }
@@ -32,7 +32,7 @@ exports.addProductToWishlist = async (req, res) => {
       if (user.wishlist.length < 25) {
         user.wishlist.push({ product: productId });
         await user.save();
-        res.status(201).json({ message: "Product added to wishlist" });
+        res.status(201).json({ message: "Product added to wishlist" })
       } else {
         res.status(400).json({ message: "Wishlist is full" });
       }
