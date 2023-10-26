@@ -167,12 +167,12 @@ exports.sortProducts = async (req, res) => {
       sort = { productPrice: -1 };
     } else if (sortBy === "featured") {
       sort = { createdAt: -1 }
-    }
+    }                                       
 
     const priceFilter = {};
 
     if (minPrice) {
-      priceFilter.productPrice = { $gte: parseFloat(minPrice) };
+      priceFilter.productPrice = { $gte: parseFloat(minPrice) }
     }
 
     if (maxPrice) {
