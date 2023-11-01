@@ -43,6 +43,7 @@ const OrderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now, // Set a default value to the current date and time
   },
+  razorpayOrderID: String,
   orderID: String,
 });
 

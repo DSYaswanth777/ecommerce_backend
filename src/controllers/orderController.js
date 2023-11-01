@@ -1,11 +1,11 @@
-// controllers/orderController.js
-
 const User = require("../models/User");
 const orderModel = require("../models/orderModel")
-const Product = require("../models/productModel");
+const Product = require("../models/productModel")
 const path = require("path");
-
+const Razorpay = require("razorpay");
 const PDFDocument = require("pdfkit");
+const crypto = require("crypto");
+
 function generateOrderID() {
   const currentDate = new Date();
   const formattedDate = currentDate
@@ -28,110 +28,148 @@ exports.placeOrder = async (req, res) => {
     const userId = req.user.id;
     const { shippingAddress } = req.body;
 
-    const user = await User.findById(userId).populate("cart.product")
+    const user = await User.findById(userId).populate("cart.product");
     if (!user) {
-      return res.status(404).json({ message: "User not found" })
+      return res.status(404).json({ message: "User not found" });
     }
+
     let totalAmount = 0;
     user.cart.forEach((cartItem) => {
       const product = cartItem.product;
       if (product) {
-        totalAmount += product.productPrice * cartItem.quantity + 50;
+        totalAmount += product.productPrice * cartItem.quantity + 50
       }
     });
+
     const orderID = generateOrderID();
 
-    // Get the current date and time
-    const orderDate = new Date();
-    const order = new orderModel({
-      user: userId,
-      cartItems: user.cart,
-      shippingAddress: shippingAddress,
-      totalAmount,
-      paymentStatus: "pending",
-      orderID: orderID,
-      orderDate: orderDate,
+    const instance = new Razorpay({
+      key_id: process.env.YOUR_RAZORPAY_KEY_ID,
+      key_secret: process.env.YOUR_RAZORPAY_KEY_SECRET,
     });
 
-    await order.save();
+    const options = {
+      amount: totalAmount * 100, // Amount should be in paise (INR)
+      currency: "INR",
+      receipt: crypto.randomBytes(10).toString("hex"),
+    };
 
-    // Add the order to the user's orders array
-    user.orders.push(order);
+    instance.orders.create(options, async (error, order) => {
+      if (error) {
+        console.log(error);
+        return res.status(500).json({ message: "Something Went Wrong!" });
+      }
 
-    // Clear the user's cart
-    user.cart = [];
+      // Get the current date and time
+      const orderDate = new Date();
+      const newOrder = new orderModel({
+        user: userId,
+        cartItems: user.cart,
+        shippingAddress: shippingAddress,
+        totalAmount,
+        paymentStatus: "pending",
+        orderID: orderID,
+        orderDate: orderDate,
+        razorpayOrderID: order.id,
+      });
 
-    await user.save();
+      await newOrder.save();
 
-    res.status(201).json({ message: "Order placed successfully", orderID });
+      // Add the order to the user's orders array
+      user.orders.push(newOrder);
+
+      // Clear the user's cart
+      user.cart = [];
+
+      await user.save();
+
+      res.status(201).json({
+        message: "Order placed successfully",
+        razorpayOrderID:order.id,
+        orderID,
+        order: newOrder,
+      });
+    });
   } catch (error) {
     console.error("Error placing order:", error);
     res
       .status(500)
-      .json({ message: "An error occurred while placing the order" });
+      .json({ message: "An error occurred while placing the order" })
   }
 };
+
 exports.updateOrder = async (req, res) => {
   try {
-    const { orderID, paymentStatus } = req.body;
-    const order = await orderModel.findOne({ orderID: orderID });
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      orderID,
+    } = req.body;
+    // Retrieve the order from the database based on the orderID
+    const order = await orderModel.findOne({ orderID });
+
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // Check if the payment status is "successful"
-    if (paymentStatus === "Successful") {
-      // Update the order payment status
-      order.paymentStatus = paymentStatus;
-      await order.save();
-
-      // Update product stock for each item in the order
-      for (const item of order.cartItems) {
-        const product = await Product.findById(item.product);
-
-        if (product) {
-          // Ensure there is enough stock to fulfill the order
-          if (product.productStock >= item.quantity) {
-            product.productStock -= item.quantity;
-            await product.save();
-          } else {
-            // Handle cases where there's not enough stock
-            return res.status(400).json({
-              message: "Not enough stock to fulfill the order",
-              product: product.productName,
-            });
-          }
-        } else {
-          // Handle cases where the product is not found
-          return res.status(404).json({
-            message: "Product not found",
-            productId: item.product,
-          });
-        }
-      }
-    } else {
-      // Handle cases where the payment status is not "successful"
-      return res.status(400).json({
-        message: "Payment status is not successful",
-      });
+    // Ensure the payment status is "pending" before proceeding
+    if (order.paymentStatus !== "pending") {
+      return res.status(400).json({ message: "Order payment is not pending" });
     }
 
-    res
-      .status(200)
-      .json({ message: "Order payment status and stock updated successfully" });
+    // Verify the Razorpay signature
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.YOUR_RAZORPAY_KEY_SECRET)
+      .update(razorpay_order_id + "|" + razorpay_payment_id)
+      .digest("hex");
+
+    if (expectedSign !== razorpay_signature) {
+      return res.status(400).json({ message: "Invalid signature sent!" });
+    }
+
+    // Process each item in the order
+    for (const item of order.cartItems) {
+      const product = await Product.findById(item.product);
+
+      if (!product) {
+        return res.status(404).json({
+          message: "Product not found",
+          productId: item.product,
+        });
+      }
+
+      // Check if there is enough stock to fulfill the order
+      if (product.productStock < item.quantity) {
+        return res.status(400).json({
+          message: "Not enough stock to fulfill the order",
+          product: product.productName,
+        });
+      }
+
+      // Deduct the quantity from product stock
+      product.productStock -= item.quantity;
+      await product.save();
+    }
+
+    // Update the order's payment status
+    order.paymentStatus = "Successful";
+    await order.save();
+
+    return res.status(200).json({ message: "Payment verified successfully" });
   } catch (error) {
-    console.error("Error updating order payment status:", error);
-    res.status(500).json({
-      message: "An error occurred while updating the order payment status",
-    });
+    console.error("Error updating order:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+
 exports.getAllUserOrders = async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId).populate({
       path: "orders",
-      options: { sort: { orderDate: -1 } }, 
+      options: { sort: { orderDate: -1 } },
       populate: {
         path: "cartItems.product",
         select: "productName productPrice productImages subcategoryId ", // Add other product fields you need
@@ -153,7 +191,7 @@ exports.getAllUserOrders = async (req, res) => {
     console.error("Error fetching user orders:", error);
     res
       .status(500)
-      .json({ message: "An error occurred while fetching user orders" })
+      .json({ message: "An error occurred while fetching user orders" });
   }
 };
 exports.getAllOrdersForAdmin = async (req, res) => {
@@ -171,8 +209,7 @@ exports.getAllOrdersForAdmin = async (req, res) => {
       .populate({
         path: "user",
         select: "shippingAddress",
-      })
-      
+      });
 
     res.status(200).json({ orders });
   } catch (error) {

@@ -39,7 +39,7 @@ app.use(
 );
 app.use(limiter); // Rate limiting
 const corsOptions = {
-  origin: "http://localhost:5173",
+  origin: "*",
   credentials: true,
 };
 

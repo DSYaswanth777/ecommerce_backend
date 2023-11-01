@@ -34,6 +34,7 @@
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "pdfkit": "^0.13.0",
+    "razorpay": "^2.9.2",
     "svg2pdf.js": "^2.2.2"
   }
 }

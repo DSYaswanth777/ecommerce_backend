@@ -139,7 +139,6 @@ exports.getUserCart = async (req, res) => {
       .json({ message: "An error occurred while fetching user's cart" });
   }
 };
-
 //**Remove Product from Cart */
 exports.removeProductFromCart = async (req, res) => {
   try {
