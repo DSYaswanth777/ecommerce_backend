@@ -5,24 +5,9 @@ const path = require("path");
 const Razorpay = require("razorpay");
 const PDFDocument = require("pdfkit");
 const crypto = require("crypto");
+const { generateOrderID } = require("../utilities/generateOrderId");
 
-function generateOrderID() {
-  const currentDate = new Date();
-  const formattedDate = currentDate
-    .toISOString()
-    .slice(0, 10)
-    .replace(/-/g, "");
-  const uniqueChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let uniqueString = "";
 
-  // Generate a 6-character random string
-  for (let i = 0; i < 6; i++) {
-    const randomIndex = Math.floor(Math.random() * uniqueChars.length);
-    uniqueString += uniqueChars[randomIndex];
-  }
-
-  return `ODID${formattedDate}${uniqueString}`;
-}
 exports.placeOrder = async (req, res) => {
   try {
     const userId = req.user.id;
