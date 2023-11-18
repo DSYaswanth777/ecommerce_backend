@@ -107,17 +107,33 @@ exports.getUserCart = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    if (user.cart.length === 0) {
+      // If the cart is empty, remove the applied coupon
+      user.appliedCoupon = null;
+      await user.save();
+      return res.status(200).json({
+        cartItems: [],
+        totalFee: 0,
+        actualPrice: 0,
+        deliveryCharge: 0,
+        appliedCoupon: null,
+      });
+    }
+
     let totalFee = 0;
+    let actualPrice = 0;
     user.cart.forEach((cartItem) => {
       const product = cartItem.product;
       if (product) {
         const itemTotal = product.productPrice * cartItem.quantity;
+        actualPrice += itemTotal;
         totalFee += itemTotal;
       }
     });
 
     if (user.appliedCoupon && user.appliedCoupon.discountAmount > 0) {
       totalFee -= user.appliedCoupon.discountAmount;
+      totalFee = Math.max(totalFee, 0);
     }
 
     let totalDeliveryFee = 0;
@@ -138,10 +154,13 @@ exports.getUserCart = async (req, res) => {
     }
 
     totalFee += totalDeliveryFee;
+    user.cart.totalFee = totalFee; // Store totalFee in the cart item
     res.status(200).json({
       cartItems: user.cart,
       totalFee,
+      actualPrice,
       deliveryCharge: totalDeliveryFee,
+      appliedCoupon: user.appliedCoupon || null,
     });
   } catch (error) {
     console.error("Error fetching user's cart:", error);

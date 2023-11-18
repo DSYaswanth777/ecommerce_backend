@@ -58,6 +58,10 @@ const userSchema = new mongoose.Schema({
         type: Number,
         default: 1, // Default quantity when adding to cart
       },
+      totalFee: {
+        type: Number,
+        default: 0,
+      },
     },
   ],
   orders: [

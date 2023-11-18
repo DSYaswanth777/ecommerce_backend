@@ -6,8 +6,6 @@ const Razorpay = require("razorpay");
 const PDFDocument = require("pdfkit");
 const crypto = require("crypto");
 const { generateOrderID } = require("../utilities/generateOrderId");
-
-
 exports.placeOrder = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -19,13 +17,13 @@ exports.placeOrder = async (req, res) => {
     }
 
     let totalAmount = 0;
-    user.cart.forEach((cartItem) => {
-      const product = cartItem.product;
-      if (product) {
-        totalAmount += product.productPrice * cartItem.quantity + 50
-      }
-    });
-
+    // user.cart.forEach((cartItem) => {
+    //   const product = cartItem.product;
+    //   if (product) {
+    //     totalAmount += product.productPrice * cartItem.quantity + 50
+    //   }
+    // });
+user.cart.totalFee = totalAmount
     const orderID = generateOrderID();
 
     const instance = new Razorpay({
@@ -82,7 +80,6 @@ exports.placeOrder = async (req, res) => {
       .json({ message: "An error occurred while placing the order" })
   }
 };
-
 exports.updateOrder = async (req, res) => {
   try {
     const {
@@ -147,8 +144,6 @@ exports.updateOrder = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-
 exports.getAllUserOrders = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -340,7 +335,6 @@ exports.shippingAddress = async (req, res) => {
     }
   }
 };
-
 exports.getOrdersByDate = async (req, res) => {
   try {
     const { orderDate } = req.query;
