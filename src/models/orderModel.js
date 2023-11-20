@@ -44,7 +44,22 @@ const OrderSchema = new mongoose.Schema({
     default: Date.now, // Set a default value to the current date and time
   },
   razorpayOrderID: String,
+  razorpay_payment_id:String,
+  couponDiscount: {
+    type: Number,
+  },
+  deliveryFee:{
+    type:Number
+  },
   orderID: String,
+  courierName: {
+    type: String,
+    default: null,
+  },
+  trackingID: {
+    type: String,
+    default: null,
+  },
 });
 
 module.exports = mongoose.model("Order", OrderSchema);

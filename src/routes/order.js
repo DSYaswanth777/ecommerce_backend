@@ -13,6 +13,7 @@ const {
   shippingAddress,
   getOrdersByDate,
   getOrdersByID,
+  editOrder,
 } = require("../controllers/orderController");
 
 router.post(
@@ -46,15 +47,22 @@ router.get(
   authenticationMiddleware.isAuthenticated,
   authorizationMiddleware.isAdmin,
   shippingAddress
-)
+);
 router.get(
   "/user/orders/filter",
   authenticationMiddleware.isAuthenticated,
   getOrdersByDate
-)
+);
 router.get(
   "/user/orders/filter/order",
   authenticationMiddleware.isAuthenticated,
   getOrdersByID
-)
+);
+router.patch(
+  "/admin/orders/:orderID/edit",
+  authenticationMiddleware.isAuthenticated,
+  authorizationMiddleware.isAdmin,
+  editOrder
+);
+
 module.exports = router;

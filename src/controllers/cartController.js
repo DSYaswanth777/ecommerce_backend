@@ -2,6 +2,7 @@
 const User = require("../models/User");
 //**Importing Product Model */
 const Product = require("../models/productModel");
+const { calculateTotalAmount } = require("../utilities/amountCalculations");
 //**addProduct to cart controller */
 exports.addProductToCart = async (req, res) => {
   try {
@@ -103,12 +104,14 @@ exports.getUserCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await User.findById(userId).populate("cart.product");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const { totalFee, actualPrice, totalDeliveryFee } = calculateTotalAmount(user);
+
     if (user.cart.length === 0) {
-      // If the cart is empty, remove the applied coupon
       user.appliedCoupon = null;
       await user.save();
       return res.status(200).json({
@@ -120,41 +123,8 @@ exports.getUserCart = async (req, res) => {
       });
     }
 
-    let totalFee = 0;
-    let actualPrice = 0;
-    user.cart.forEach((cartItem) => {
-      const product = cartItem.product;
-      if (product) {
-        const itemTotal = product.productPrice * cartItem.quantity;
-        actualPrice += itemTotal;
-        totalFee += itemTotal;
-      }
-    });
-
-    if (user.appliedCoupon && user.appliedCoupon.discountAmount > 0) {
-      totalFee -= user.appliedCoupon.discountAmount;
-      totalFee = Math.max(totalFee, 0);
-    }
-
-    let totalDeliveryFee = 0;
-
-    if (totalFee < 4999) {
-      // Assuming a delivery charge of 50 for every two items
-      let itemsInCart = 0;
-      user.cart.forEach((cartItem) => {
-        const product = cartItem.quantity;
-        itemsInCart += product;
-      });
-      // Calculate delivery charge for every two items
-      totalDeliveryFee = Math.floor(itemsInCart / 2) * 50;
-      // If there's an odd number of items, add an extra 50 for the remaining item
-      if (itemsInCart % 2 !== 0) {
-        totalDeliveryFee += 50;
-      }
-    }
-
-    totalFee += totalDeliveryFee;
     user.cart.totalFee = totalFee; // Store totalFee in the cart item
+
     res.status(200).json({
       cartItems: user.cart,
       totalFee,
@@ -164,9 +134,7 @@ exports.getUserCart = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user's cart:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while fetching user's cart" });
+    res.status(500).json({ message: "An error occurred while fetching user's cart" });
   }
 };
 //**Remove Product from Cart */

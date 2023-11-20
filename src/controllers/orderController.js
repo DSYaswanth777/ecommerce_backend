@@ -1,11 +1,14 @@
 const User = require("../models/User");
-const orderModel = require("../models/orderModel")
-const Product = require("../models/productModel")
+const orderModel = require("../models/orderModel");
+const Product = require("../models/productModel");
 const path = require("path");
 const Razorpay = require("razorpay");
 const PDFDocument = require("pdfkit");
 const crypto = require("crypto");
 const { generateOrderID } = require("../utilities/generateOrderId");
+const { calculateTotalAmount } = require("../utilities/amountCalculations");
+const couponModel = require("../models/couponModel");
+
 exports.placeOrder = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -16,14 +19,9 @@ exports.placeOrder = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    let totalAmount = 0;
-    // user.cart.forEach((cartItem) => {
-    //   const product = cartItem.product;
-    //   if (product) {
-    //     totalAmount += product.productPrice * cartItem.quantity + 50
-    //   }
-    // });
-user.cart.totalFee = totalAmount
+    let { totalDeliveryFee, totalAmount, couponDiscount } =
+      calculateTotalAmount(user);
+
     const orderID = generateOrderID();
 
     const instance = new Razorpay({
@@ -37,49 +35,67 @@ user.cart.totalFee = totalAmount
       receipt: crypto.randomBytes(10).toString("hex"),
     };
 
-    instance.orders.create(options, async (error, order) => {
-      if (error) {
-        console.log(error);
-        return res.status(500).json({ message: "Something Went Wrong!" });
-      }
+    const order = await createRazorpayOrder(instance, options);
 
-      // Get the current date and time
-      const orderDate = new Date();
-      const newOrder = new orderModel({
-        user: userId,
-        cartItems: user.cart,
-        shippingAddress: shippingAddress,
-        totalAmount,
-        paymentStatus: "pending",
-        orderID: orderID,
-        orderDate: orderDate,
-        razorpayOrderID: order.id,
-      });
+    const orderDate = new Date();
+    const newOrder = new orderModel({
+      user: userId,
+      cartItems: user.cart,
+      shippingAddress: shippingAddress,
+      totalAmount,
+      paymentStatus: "pending", // Update payment status to "PENDING"
+      orderID: orderID,
+      orderDate: orderDate,
+      razorpayOrderID: order.id,
+      deliveryFee: totalDeliveryFee,
+      couponDiscount: couponDiscount,
+    });
 
-      await newOrder.save();
+    await newOrder.save();
 
-      // Add the order to the user's orders array
-      user.orders.push(newOrder);
+    // Update the user's orders array and cart atomically
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, __v: user.__v }, // Find the user by ID and version
+      {
+        $push: { orders: newOrder }, // Add the order to the orders array
+        $set: { cart: [] }, // Clear the user's cart
+      },
+      { new: true } // Return the modified document
+    );
 
-      // Clear the user's cart
-      user.cart = [];
+    if (!updatedUser) {
+      // If the document wasn't updated, handle the error
+      return res
+        .status(500)
+        .json({ message: "Failed to update user document" });
+    }
 
-      await user.save();
-
-      res.status(201).json({
-        message: "Order placed successfully",
-        razorpayOrderID:order.id,
-        orderID,
-        order: newOrder,
-      });
+    res.status(201).json({
+      message: "Order placed successfully",
+      razorpayOrderID: order.id,
+      orderID,
+      deliveryFee: totalDeliveryFee,
+      order: newOrder,
     });
   } catch (error) {
     console.error("Error placing order:", error);
     res
       .status(500)
-      .json({ message: "An error occurred while placing the order" })
+      .json({ message: "An error occurred while placing the order" });
   }
 };
+async function createRazorpayOrder(instance, options) {
+  return new Promise((resolve, reject) => {
+    instance.orders.create(options, (error, order) => {
+      if (error) {
+        console.error("Razorpay order creation error:", error);
+        reject(error);
+      } else {
+        resolve(order);
+      }
+    });
+  });
+}
 exports.updateOrder = async (req, res) => {
   try {
     const {
@@ -88,6 +104,7 @@ exports.updateOrder = async (req, res) => {
       razorpay_signature,
       orderID,
     } = req.body;
+
     // Retrieve the order from the database based on the orderID
     const order = await orderModel.findOne({ orderID });
 
@@ -133,10 +150,30 @@ exports.updateOrder = async (req, res) => {
       product.productStock -= item.quantity;
       await product.save();
     }
-
+    order.razorpay_payment_id = razorpay_payment_id;
     // Update the order's payment status
     order.paymentStatus = "Successful";
     await order.save();
+
+    // Fetch the user's applied coupon
+    const user = await User.findById(order.user);
+
+    if (user.appliedCoupon && user.appliedCoupon.code) {
+      const couponCode = user.appliedCoupon.code;
+
+      // Find the coupon in the database
+      const coupon = await couponModel.findOne({ code: couponCode });
+
+      if (coupon) {
+        // Check if the coupon has a maximum usage limit
+        if (coupon.maxUses !== undefined && coupon.maxUses !== null) {
+          // Update the max usage of the coupon
+          coupon.maxUses -= 1;
+          // Save the updated coupon
+          await coupon.save();
+        }
+      }
+    }
 
     return res.status(200).json({ message: "Payment verified successfully" });
   } catch (error) {
@@ -212,7 +249,6 @@ exports.getOrderDetails = async (req, res) => {
         select: "name",
       },
     });
-
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
@@ -421,5 +457,29 @@ exports.getOrdersByID = async (req, res) => {
     res.status(500).json({
       message: "An error occurred while fetching orders by ID",
     });
+  }
+};
+exports.editOrder = async (req, res) => {
+  try {
+    const { orderID } = req.params;
+    const { courierName, trackingID, paymentStatus } = req.body;
+    // Find the order based on the orderID
+    const order = await orderModel.findOne({ orderID });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    // Update the order with the new courier name, tracking ID, and payment status
+    order.courierName = courierName;
+    order.trackingID = trackingID;
+    // If paymentStatus is provided in the request body, update it
+    if (paymentStatus) {
+      order.paymentStatus = paymentStatus;
+    }
+    // Save the updated order
+    await order.save();
+    res.status(200).json({ message: "Order updated successfully", order });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
