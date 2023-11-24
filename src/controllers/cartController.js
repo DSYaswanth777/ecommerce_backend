@@ -55,10 +55,19 @@ exports.increaseCartItemQuantity = async (req, res) => {
       return res.status(404).json({ message: "Cart item not found" });
     }
 
-    cartItem.quantity += 1;
-    await user.save();
+    const product = await Product.findById(cartItem.product);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
-    res.status(200).json({ message: "Cart item quantity increased" });
+    // Check if there is enough stock to increase the quantity
+    if (cartItem.quantity < product.productStock) {
+      cartItem.quantity += 1;
+      await user.save();
+      res.status(200).json({ message: "Cart item quantity increased" });
+    } else {
+      res.status(400).json({ message: "Not enough stock to increase quantity" });
+    }
   } catch (error) {
     console.error("Error increasing cart item quantity:", error);
     res.status(500).json({

@@ -104,7 +104,6 @@ exports.updateOrder = async (req, res) => {
       razorpay_signature,
       orderID,
     } = req.body;
-
     // Retrieve the order from the database based on the orderID
     const order = await orderModel.findOne({ orderID });
 
@@ -139,7 +138,7 @@ exports.updateOrder = async (req, res) => {
       }
 
       // Check if there is enough stock to fulfill the order
-      if (product.productStock < item.quantity) {
+      if (product.productStock - item.quantity < 0) {
         return res.status(400).json({
           message: "Not enough stock to fulfill the order",
           product: product.productName,
@@ -462,7 +461,8 @@ exports.getOrdersByID = async (req, res) => {
 exports.editOrder = async (req, res) => {
   try {
     const { orderID } = req.params;
-    const { courierName, trackingID, paymentStatus } = req.body;
+    const { courierName, trackingID } = req.body;
+    console.log(orderID,courierName,trackingID)
     // Find the order based on the orderID
     const order = await orderModel.findOne({ orderID });
     if (!order) {
@@ -471,10 +471,10 @@ exports.editOrder = async (req, res) => {
     // Update the order with the new courier name, tracking ID, and payment status
     order.courierName = courierName;
     order.trackingID = trackingID;
-    // If paymentStatus is provided in the request body, update it
-    if (paymentStatus) {
-      order.paymentStatus = paymentStatus;
-    }
+    // // If paymentStatus is provided in the request body, update it
+    // if (paymentStatus) {
+    //   order.paymentStatus = paymentStatus;
+    // }
     // Save the updated order
     await order.save();
     res.status(200).json({ message: "Order updated successfully", order });
