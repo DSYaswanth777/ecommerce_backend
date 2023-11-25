@@ -47,6 +47,7 @@ exports.placeOrder = async (req, res) => {
       orderID: orderID,
       orderDate: orderDate,
       razorpayOrderID: order.id,
+      razorpay_payment_id:order.razorpay_payment_id,
       deliveryFee: totalDeliveryFee,
       couponDiscount: couponDiscount,
     });
@@ -462,20 +463,15 @@ exports.editOrder = async (req, res) => {
   try {
     const { orderID } = req.params;
     const { courierName, trackingID } = req.body;
-    console.log(orderID,courierName,trackingID)
     // Find the order based on the orderID
     const order = await orderModel.findOne({ orderID });
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
-    // Update the order with the new courier name, tracking ID, and payment status
+    // Update the order with the new courier name, tracking ID
     order.courierName = courierName;
     order.trackingID = trackingID;
-    // // If paymentStatus is provided in the request body, update it
-    // if (paymentStatus) {
-    //   order.paymentStatus = paymentStatus;
-    // }
-    // Save the updated order
+ 
     await order.save();
     res.status(200).json({ message: "Order updated successfully", order });
   } catch (error) {
