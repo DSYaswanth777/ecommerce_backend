@@ -10,6 +10,7 @@ const { validationResult } = require("express-validator");
 const { sendWelcomeEmail } = require("../utilities/welcomeEmail");
 //**Importing Token Geneartion utility */
 const { generateToken } = require("../utilities/tokenGeneration");
+const { passwordChangeEmail } = require("../utilities/passwordChangeEmail");
 
 //**Controller For Signup */
 exports.signup = async (req, res) => {
@@ -116,11 +117,9 @@ exports.login = async (req, res) => {
     }
 
     if (!user.isVerified) {
-      return res
-        .status(401)
-        .json({
-          message: "Account not verified. Please verify your account first.",
-        });
+      return res.status(401).json({
+        message: "Account not verified. Please verify your account first.",
+      });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -213,7 +212,7 @@ exports.changePassword = async (req, res) => {
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
     await user.save();
-
+    passwordChangeEmail(user.email, user.name);
     return res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
     return res

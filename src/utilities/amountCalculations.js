@@ -22,6 +22,7 @@ let couponDiscount =0;
   totalFee += totalDeliveryFee;
 
   return {actualPrice,couponDiscount, totalFee, totalDeliveryFee, totalAmount: totalFee };
+
 }
 function calculateDeliveryFee(cart) {
   let itemsInCart = 0;

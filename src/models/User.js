@@ -51,17 +51,25 @@ const userSchema = new mongoose.Schema({
   cart: [
     {
       product: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product", // Reference to the Product model
+        _id: mongoose.Schema.Types.ObjectId,
+        productName: String,
+        productPrice: Number,
+        productImages: [String],
+        productInfo: String,
+        productStock: Number,
+        subcategoryId: mongoose.Schema.Types.ObjectId,
+        categoryId: mongoose.Schema.Types.ObjectId,
+        createdAt: Date,
       },
       quantity: {
         type: Number,
         default: 1, // Default quantity when adding to cart
       },
-      totalFee: {
-        type: Number,
-        default: 0,
+      productDetails: {
+        type: mongoose.Schema.Types.Mixed,
       },
+      
+    
     },
   ],
   orders: [
@@ -81,6 +89,14 @@ const userSchema = new mongoose.Schema({
   appliedCoupon: {
     code: String, // Store the applied coupon code
     discountAmount: Number, // Store the discount amount
+  },
+  totalFee: {
+    type: Number,
+    default: 0,
+  },
+  totalDeliveryFee: {
+    type: Number,
+    default: 0,
   },
 });
 

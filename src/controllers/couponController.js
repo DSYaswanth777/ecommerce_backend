@@ -1,8 +1,6 @@
 const User = require("../models/User");
 const Coupon = require("../models/couponModel");
 const moment = require("moment-timezone");
-
-//** Controller to add a new coupon */
 exports.addCouponCode = async (req, res) => {
   try {
     const {
@@ -12,15 +10,30 @@ exports.addCouponCode = async (req, res) => {
       expirationDate,
       forSpecificUser,
       targetUsers,
+      discountType
     } = req.body;
 
-    if (forSpecificUser && (!targetUsers || targetUsers.length === 0)) {
+    // Validate discountType
+    if (!['product', 'delivery'].includes(discountType)) {
       return res.status(400).json({
-        message: 'Target users must be specified for a specific user coupon',
+        message: 'Invalid discount type. Must be either "product" or "delivery".'
       });
     }
 
-    // If the coupon is for specific users, check if the provided user IDs are valid
+    // Validate discountedAmount for product-type coupons
+    if (discountType === 'product' && (discountedAmount === undefined || discountedAmount === null)) {
+      return res.status(400).json({
+        message: 'Discounted amount must be specified for product-type coupons.'
+      });
+    }
+
+    if (forSpecificUser && (!targetUsers || targetUsers.length === 0)) {
+      return res.status(400).json({
+        message: 'Target users must be specified for a specific user coupon.',
+      });
+    }
+
+    // Validate user IDs for specific user coupons
     if (forSpecificUser) {
       const invalidUserIds = await User.find({ _id: { $in: targetUsers } }).countDocuments({ _id: { $nin: targetUsers } });
       if (invalidUserIds > 0) {
@@ -28,10 +41,7 @@ exports.addCouponCode = async (req, res) => {
       }
     }
 
-    const expirationDateIST = moment(expirationDate)
-      .tz('Asia/Kolkata')
-      .toDate();
-
+    const expirationDateIST = moment(expirationDate).tz('Asia/Kolkata').toDate();
     const existingCoupon = await Coupon.findOne({ code });
 
     if (existingCoupon) {
@@ -40,30 +50,29 @@ exports.addCouponCode = async (req, res) => {
 
     const newCoupon = new Coupon({
       code,
-      discountedAmount,
+      discountedAmount: discountType === 'product' ? discountedAmount : null, 
       maxUses,
       expirationDate: expirationDateIST,
       forSpecificUser,
       targetUsers: forSpecificUser ? targetUsers : [],
+      discountType
     });
 
     await newCoupon.save();
-
     res.status(201).json({ message: 'Coupon code added successfully' });
   } catch (error) {
     console.error('Error adding coupon code:', error);
-    res
-      .status(500)
-      .json({ message: 'An error occurred while adding the coupon code' });
+    res.status(500).json({ message: 'An error occurred while adding the coupon code' });
   }
 };
+
+
 //**Controller to apply a coupon to the user's cart */
 exports.applyCouponCode = async (req, res) => {
   try {
     const userId = req.user.id;
     const { couponCode } = req.body;
     const user = await User.findById(userId);
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -73,46 +82,87 @@ exports.applyCouponCode = async (req, res) => {
     if (!coupon) {
       return res.status(404).json({ message: "Coupon code not found" });
     }
-    if (coupon.forSpecificUser && !coupon.targetUsers.includes(userId)) {
-      return res.status(403).json({ message: 'Coupon not applicable to this user' });
+
+    if (coupon.discountType === "delivery") {
+      const totalDeliveryFee = typeof user.totalDeliveryFee === 'number' ? user.totalDeliveryFee : 0;
+
+      // Ensure coupon.discountedAmount is a valid number
+      const discountAmount = typeof coupon.discountedAmount === 'number' ? coupon.discountedAmount : 0;
+    
+      // Calculate the discounted delivery fee safely
+      const discountedDeliveryFee = Math.max(0, totalDeliveryFee - discountAmount);
+    
+      // Apply the discount to the delivery fee
+      user.appliedCoupon = {
+        code: coupon.code,
+        discountAmount: coupon.discountedAmount,
+        discountType: "delivery",
+      };
+
+      // Update user's delivery fee
+      user.totalDeliveryFee = discountedDeliveryFee;
+    } else {
+      // Existing logic for product discount
+      user.appliedCoupon = {
+        code: coupon.code,
+        discountAmount: coupon.discountedAmount,
+        discountType: "product",
+      };
     }
+
+    // Check if the coupon is applicable for the user
+    if (coupon.forSpecificUser && !coupon.targetUsers.includes(userId)) {
+      return res
+        .status(403)
+        .json({ message: "Coupon not applicable to this user" });
+    }
+
     // Check if the coupon has reached its maximum usage limit
-    if (coupon.maxUses === 0) {
+    if (coupon.maxUses <= 0) {
       return res
         .status(403)
         .json({ message: "Coupon has reached its maximum usage limit" });
     }
 
-    if (coupon.expirationDate) {
-      const currentDateTime = new Date().toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-      });
-      const couponExpirationDateTime = new Date(
-        coupon.expirationDate
-      ).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
-      // Compare the current date and time with the coupon's expiration date and time
-      if (couponExpirationDateTime < currentDateTime) {
-        return res.status(403).json({ message: "Coupon has expired/not applicable to this user" });
-      }
+    // Check if the coupon has expired
+    const currentDateTime = new Date();
+    if (coupon.expirationDate && coupon.expirationDate < currentDateTime) {
+      return res.status(403).json({ message: "Coupon has expired" });
     }
 
-    user.appliedCoupon = {
-      code: coupon.code,
-      discountAmount: coupon.discountedAmount,
-    };
+    // Check the type of the coupon and apply it accordingly
+    if (coupon.discountType === "delivery") {
+    
+      // Apply the discount to the delivery fee
+      user.appliedCoupon = {
+        code: coupon.code,
+        discountAmount: user.totalDeliveryFee,
+        discountType: "delivery",
+      };
+      console.log(user.totalDeliveryFee);
+// user.totalDeliveryFee =0;
+      // Update user's delivery fee
+      // user.deliveryFee = discountedDeliveryFee;
+    } else {
+      // Existing logic for product discount
+      user.appliedCoupon = {
+        code: coupon.code,
+        discountAmount: coupon.discountedAmount,
+        discountType: "product",
+      };
+    }
 
     // Increment the used count of the coupon
-    coupon.usedCount += 1;
     await coupon.save();
 
     await user.save();
 
-    // Modify the response to include the applied coupon information
     res.status(200).json({
       message: "Coupon applied successfully",
       appliedCoupon: {
         code: coupon.code,
         discountAmount: coupon.discountedAmount,
+        discountType: coupon.discountType,
       },
     });
   } catch (error) {
@@ -146,7 +196,14 @@ exports.deleteCouponCode = async (req, res) => {
 exports.editCouponCode = async (req, res) => {
   try {
     const { couponId } = req.params;
-    const { code, discountedAmount, maxUses, expirationDate, forSpecificUser, targetUsers } = req.body;
+    const {
+      code,
+      discountedAmount,
+      maxUses,
+      expirationDate,
+      forSpecificUser,
+      targetUsers,
+    } = req.body;
     // Check if the coupon exists
     const coupon = await Coupon.findById(couponId);
     if (!coupon) {
@@ -157,9 +214,11 @@ exports.editCouponCode = async (req, res) => {
     if (coupon.forSpecificUser !== forSpecificUser) {
       // If changing to specific user coupon, check if the provided user IDs are valid
       if (forSpecificUser) {
-        const invalidUserIds = await User.find({ _id: { $in: targetUsers } }).countDocuments({ _id: { $nin: targetUsers } });
+        const invalidUserIds = await User.find({
+          _id: { $in: targetUsers },
+        }).countDocuments({ _id: { $nin: targetUsers } });
         if (invalidUserIds > 0) {
-          return res.status(400).json({ message: 'Invalid user IDs provided' });
+          return res.status(400).json({ message: "Invalid user IDs provided" });
         }
       }
       // Update the coupon's information

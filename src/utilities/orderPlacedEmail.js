@@ -7,7 +7,7 @@ const fs = require("fs");
 //**Import path from module */
 const path = require("path");
 //**Function to send welcome email
-function sendWelcomeEmail(to, recipientName, senderName) {
+function orderPlacedEmail(to, recipientName, orderID, totalPrice, paymentStatus,paymentID,destructuredCartItems) {
   const transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE_PROVIDER,
     auth: {
@@ -19,13 +19,12 @@ function sendWelcomeEmail(to, recipientName, senderName) {
     __dirname,
     "..",
     "email",
-    "emailTemplate.html"
+    "orderPalcedEmailTemplate.html"
   );
   const source = fs.readFileSync(templatePath, "utf8");
   const template = handlebars.compile(source);
-  const html = template({ name: recipientName });
-  
-
+  const html = template({ name: recipientName, orderID,totalPrice, paymentStatus,paymentID,destructuredCartItems });
+ 
   const attachments = [
     {
       filename: "brand_logo.png",
@@ -48,18 +47,18 @@ function sendWelcomeEmail(to, recipientName, senderName) {
       cid: "whatsapp@cid",
     },
   ];
-
+  
   const mailOptions = {
     from: `"GSR Handlooms" <${process.env.EMAIL_USER}>`,
     to: to,
-    subject: "Welcome to GSR HandLooms",
+    subject: `Your GSR Handlooms order #${orderID}`,
     html: html,
     attachments: attachments,
   };
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) {
-      console.log("Error sending welcome email:", error);
+      console.log("Error sending order email:", error);
     }
   });
 }
-module.exports = { sendWelcomeEmail };
+module.exports = { orderPlacedEmail };

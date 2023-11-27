@@ -20,15 +20,31 @@ exports.addProductToCart = async (req, res) => {
 
     // Check if the product is already in the user's cart
     const cartItem = user.cart.find((item) => item.product.equals(productId));
-
+    const productDetails = {
+      _id: productId,
+      productName: product.productName,
+      productPrice: product.productPrice,
+      productImages: product.productImages,
+      productInfo: product.productInfo,
+      productStock: product.productStock,
+      subcategoryId: product.subcategoryId,
+      categoryId: product.categoryId,
+      createdAt: product.createdAt,
+    };
     if (cartItem) {
       // If the product is already in the cart, increase the quantity by one
       cartItem.quantity += 1;
     } else {
       // If the product is not in the cart, add it with quantity one
-      user.cart.push({ product: productId, quantity: 1 });
+      user.cart.push({ product: productDetails, quantity: 1 });
     }
 
+    const { totalFee, actualPrice, totalDeliveryFee } =
+      calculateTotalAmount(user);
+
+    // Update totalFee and deliveryFee in user document
+    user.totalFee = totalFee;
+    user.totalDeliveryFee = totalDeliveryFee;
     await user.save();
 
     res.status(201).json({ message: "Product added to cart" });
@@ -50,23 +66,27 @@ exports.increaseCartItemQuantity = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Find the cart item by its ID
     const cartItem = user.cart.id(cartItemId);
     if (!cartItem) {
       return res.status(404).json({ message: "Cart item not found" });
     }
 
-    const product = await Product.findById(cartItem.product);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
     // Check if there is enough stock to increase the quantity
-    if (cartItem.quantity < product.productStock) {
+    if (cartItem.quantity < cartItem.product.productStock) {
       cartItem.quantity += 1;
+      const { totalFee, totalDeliveryFee } = calculateTotalAmount(user);
+
+      // Update totalFee and totalDeliveryFee in user document
+      user.totalFee = totalFee;
+      user.totalDeliveryFee = totalDeliveryFee;
+
       await user.save();
       res.status(200).json({ message: "Cart item quantity increased" });
     } else {
-      res.status(400).json({ message: "Not enough stock to increase quantity" });
+      res
+        .status(400)
+        .json({ message: "Not enough stock to increase quantity" });
     }
   } catch (error) {
     console.error("Error increasing cart item quantity:", error);
@@ -98,6 +118,12 @@ exports.decreaseCartItemQuantity = async (req, res) => {
     } else {
       // Remove the cart item if quantity becomes zero
       user.cart.pull(cartItemId);
+      const { totalFee, totalDeliveryFee } = calculateTotalAmount(user);
+
+      // Update totalFee and totalDeliveryFee in user document
+      user.totalFee = totalFee;
+      user.totalDeliveryFee = totalDeliveryFee;
+
       await user.save();
       res.status(200).json({ message: "Cart item removed" });
     }
@@ -112,13 +138,14 @@ exports.decreaseCartItemQuantity = async (req, res) => {
 exports.getUserCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const user = await User.findById(userId).populate("cart.product");
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const { totalFee, actualPrice, totalDeliveryFee } = calculateTotalAmount(user);
+    const { totalFee, actualPrice, totalDeliveryFee } =
+      calculateTotalAmount(user);
 
     if (user.cart.length === 0) {
       user.appliedCoupon = null;
@@ -143,7 +170,9 @@ exports.getUserCart = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user's cart:", error);
-    res.status(500).json({ message: "An error occurred while fetching user's cart" });
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching user's cart" });
   }
 };
 //**Remove Product from Cart */
@@ -155,8 +184,15 @@ exports.removeProductFromCart = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
     // Remove the cart item from the user's cart
     user.cart.pull(cartItemId);
+    const { totalFee, totalDeliveryFee } = calculateTotalAmount(user);
+
+    // Update totalFee and totalDeliveryFee in user document
+    user.totalFee = totalFee;
+    user.totalDeliveryFee = totalDeliveryFee;
+
     await user.save();
 
     res.status(200).json({ message: "Product removed from cart" });

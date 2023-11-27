@@ -1,24 +1,36 @@
 //**Mongoose Import */
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 //**Coupon Code Schema */
 const couponSchema = new mongoose.Schema({
   code: {
     type: String,
-    unique: true, 
+    unique: true,
     required: true,
   },
   discountedAmount: {
     type: Number,
+    // Custom validation based on discountType
+    validate: {
+      validator: function(value) {
+        // If discountType is product, then discountedAmount is required
+        return this.discountType !== 'product' || (typeof value === 'number');
+      },
+      message: 'Discounted amount is required for product-type coupons.'
+    }
+  },
+  discountType: {
+    type: String,
+    enum: ["product", "delivery"],
     required: true,
+    default: "product", // default value, assuming most coupons are for products
   },
   maxUses: {
-    type: Number, 
-    default: null, 
+    type: Number,
+    default: null,
     required: true,
-
   },
   expirationDate: {
-    type: Date, 
+    type: Date,
     default: null,
     required: true,
   },
@@ -26,12 +38,12 @@ const couponSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // Add a field to store specific user IDs for whom the coupon is applicable
-  targetUsers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  }],
+  targetUsers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
 });
 
-
-module.exports = mongoose.model('Coupon', couponSchema);
+module.exports = mongoose.model("Coupon", couponSchema);
